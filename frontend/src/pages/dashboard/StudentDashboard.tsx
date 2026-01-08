@@ -1,0 +1,449 @@
+import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import { useAuthStore } from "@/lib/stores/authStore";
+import { useCourseStore } from "@/lib/stores/courseStore";
+import { apiClient } from "@/lib/api/client";
+import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Label } from "@/components/ui/label";
+import {
+  BookOpen,
+  ArrowRight,
+  Users,
+  CheckCircle2,
+  XCircle,
+  Play,
+  Mail,
+  Phone,
+  MapPin,
+  GraduationCap,
+  Edit,
+  Github,
+  Linkedin,
+  Twitter,
+  Globe,
+  Instagram,
+  Link as LinkIcon,
+} from "lucide-react";
+import { Navigation } from "@/components/ui/navigation";
+
+interface UserProfile {
+  _id?: string;
+  id?: string;
+  username: string;
+  email: string;
+  name: string;
+  avatar?: string;
+  googleGmailPhoto?: string;
+  description?: string;
+  phone?: string;
+  location?: string;
+  education?: "high" | "secondary" | "graduation";
+  fieldsOfInterest?: string[];
+  skills?: string[];
+  socialLinks?: Record<string, string>;
+  followers?: string[] | number;
+  following?: string[] | number;
+  coursesEnrolledIn?: any[];
+  role?: string;
+}
+
+export default function StudentDashboard() {
+  const { user } = useAuthStore();
+  const { enrolledCourses, setEnrolledCourses } = useCourseStore();
+  const [activeTab, setActiveTab] = useState<string>("all");
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        
+        // Fetch user profile
+        const profileData = await apiClient.get<UserProfile>(`/students/${user.username}`);
+        setProfile(profileData);
+
+        // Fetch enrolled courses
+        const data = await apiClient.get<{
+          enrolledCourses: any[];
+        }>("/dashboard/student");
+
+        setEnrolledCourses(data.enrolledCourses || []);
+      } catch (error) {
+        console.error("Failed to fetch dashboard data", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, [user, setEnrolledCourses]);
+
+  if (!user) {
+    return null;
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-black text-white page-transition">
+        <Navigation />
+        <div className="container mx-auto px-4 py-8 max-w-7xl pt-24 text-center">
+          <p className="text-white/80">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  const displayProfile = profile || user;
+  const followersCount = Array.isArray(displayProfile.followers) 
+    ? displayProfile.followers.length 
+    : displayProfile.followers || 0;
+  const followingCount = Array.isArray(displayProfile.following) 
+    ? displayProfile.following.length 
+    : displayProfile.following || 0;
+  const coursesCount = displayProfile.coursesEnrolledIn?.length || enrolledCourses.length || 0;
+
+  return (
+    <div className="min-h-screen bg-black text-white page-transition">
+      <Navigation />
+
+      <div className="container mx-auto px-4 py-8 max-w-7xl pt-24">
+        {/* Profile Section */}
+        <Card className="p-3 mb-6 bg-gradient-to-br from-white/5 via-white/5 to-white/[0.02] backdrop-blur-xl border-white/10 shadow-2xl">
+          <div className="flex flex-col md:flex-row items-start gap-3">
+            {/* Enhanced Avatar */}
+            <div className="relative flex-shrink-0">
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-br from-blue-500/50 via-purple-500/50 to-pink-500/50 rounded-full blur-xl opacity-50 animate-pulse"></div>
+                <Avatar className="h-14 w-14 md:h-16 md:w-16 border-2 border-white/30 shadow-lg relative z-10 ring-1 ring-white/10">
+                  <AvatarImage 
+                    src={displayProfile.avatar || displayProfile.googleGmailPhoto} 
+                    className="object-cover w-full h-full"
+                    loading="eager"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.style.display = 'none';
+                    }}
+                  />
+                  <AvatarFallback className="text-xl bg-gradient-to-br from-blue-500 to-purple-600 text-white font-bold">
+                    {displayProfile.name?.[0]?.toUpperCase() || "U"}
+                  </AvatarFallback>
+                </Avatar>
+              </div>
+              {/* Status indicator */}
+              <div className="absolute bottom-0 right-0 h-2.5 w-2.5 bg-green-500 rounded-full border-2 border-black shadow-md z-20"></div>
+            </div>
+
+            {/* Profile Info */}
+            <div className="flex-1 w-full space-y-2">
+              {/* Header Section */}
+              <div className="flex items-start justify-between gap-3">
+                <div className="space-y-1 flex-1">
+                  <div>
+                    <Label className="text-[10px] font-medium text-white/50 uppercase tracking-wider mb-0.5 block">Name</Label>
+                    <h1 className="text-xl md:text-2xl font-bold text-white tracking-tight">
+                      {displayProfile.name}
+                    </h1>
+                  </div>
+                  <div>
+                    <Label className="text-[10px] font-medium text-white/50 uppercase tracking-wider mb-0.5 block">Username</Label>
+                    <p className="text-sm text-white/70 font-medium">@{displayProfile.username}</p>
+                  </div>
+                  {displayProfile.description && (
+                    <div>
+                      <Label className="text-[10px] font-medium text-white/50 uppercase tracking-wider mb-0.5 block">Description</Label>
+                      <p className="text-[11px] text-white/80 leading-snug">{displayProfile.description}</p>
+                    </div>
+                  )}
+                </div>
+                <Link to="/profile/edit">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="border-white/30 text-white hover:bg-white/20 hover:border-white/40 transition-all shadow-lg hover:shadow-xl text-xs h-8"
+                  >
+                    <Edit className="h-3 w-3 mr-1.5" />
+                    Edit
+                  </Button>
+                </Link>
+              </div>
+
+              {/* Stats Cards */}
+              <div className="grid grid-cols-3 gap-2">
+                <Card className="p-2 bg-white/5 border-white/10 hover:bg-white/10 transition-all cursor-pointer group">
+                  <div className="flex flex-col items-center text-center">
+                    <Users className="h-3.5 w-3.5 text-blue-400 mb-1 group-hover:scale-110 transition-transform" />
+                    <span className="text-lg font-bold text-white">{followersCount}</span>
+                    <span className="text-[10px] text-white/60 uppercase tracking-wider">Followers</span>
+                  </div>
+                </Card>
+                <Card className="p-2 bg-white/5 border-white/10 hover:bg-white/10 transition-all cursor-pointer group">
+                  <div className="flex flex-col items-center text-center">
+                    <Users className="h-3.5 w-3.5 text-purple-400 mb-1 group-hover:scale-110 transition-transform" />
+                    <span className="text-lg font-bold text-white">{followingCount}</span>
+                    <span className="text-[10px] text-white/60 uppercase tracking-wider">Following</span>
+                  </div>
+                </Card>
+                <Card className="p-2 bg-white/5 border-white/10 hover:bg-white/10 transition-all cursor-pointer group">
+                  <div className="flex flex-col items-center text-center">
+                    <BookOpen className="h-3.5 w-3.5 text-green-400 mb-1 group-hover:scale-110 transition-transform" />
+                    <span className="text-lg font-bold text-white">{coursesCount}</span>
+                    <span className="text-[10px] text-white/60 uppercase tracking-wider">Courses</span>
+                  </div>
+                </Card>
+              </div>
+
+              {/* Contact Details Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {displayProfile.email && (
+                  <Card className="p-2 bg-white/5 border-white/10 hover:bg-white/10 transition-all group">
+                    <Label className="text-[10px] font-medium text-white/50 uppercase tracking-wider mb-1 block">Email</Label>
+                    <div className="flex items-center gap-2">
+                      <div className="h-6 w-6 rounded-lg bg-blue-500/20 border border-blue-500/30 flex items-center justify-center group-hover:bg-blue-500/30 transition-colors">
+                        <Mail className="h-3 w-3 text-blue-400" />
+                      </div>
+                      <span className="text-[11px] text-white/90 font-medium truncate">{displayProfile.email}</span>
+                    </div>
+                  </Card>
+                )}
+                {displayProfile.phone && (
+                  <Card className="p-2 bg-white/5 border-white/10 hover:bg-white/10 transition-all group">
+                    <Label className="text-[10px] font-medium text-white/50 uppercase tracking-wider mb-1 block">Phone</Label>
+                    <div className="flex items-center gap-2">
+                      <div className="h-6 w-6 rounded-lg bg-green-500/20 border border-green-500/30 flex items-center justify-center group-hover:bg-green-500/30 transition-colors">
+                        <Phone className="h-3 w-3 text-green-400" />
+                      </div>
+                      <span className="text-[11px] text-white/90 font-medium">{displayProfile.phone}</span>
+                    </div>
+                  </Card>
+                )}
+                {displayProfile.location && (
+                  <Card className="p-2 bg-white/5 border-white/10 hover:bg-white/10 transition-all group">
+                    <Label className="text-[10px] font-medium text-white/50 uppercase tracking-wider mb-1 block">Location</Label>
+                    <div className="flex items-center gap-2">
+                      <div className="h-6 w-6 rounded-lg bg-purple-500/20 border border-purple-500/30 flex items-center justify-center group-hover:bg-purple-500/30 transition-colors">
+                        <MapPin className="h-3 w-3 text-purple-400" />
+                      </div>
+                      <span className="text-[11px] text-white/90 font-medium capitalize">{displayProfile.location}</span>
+                    </div>
+                  </Card>
+                )}
+                {displayProfile.education && (
+                  <Card className="p-2 bg-white/5 border-white/10 hover:bg-white/10 transition-all group">
+                    <Label className="text-[10px] font-medium text-white/50 uppercase tracking-wider mb-1 block">Education</Label>
+                    <div className="flex items-center gap-2">
+                      <div className="h-6 w-6 rounded-lg bg-yellow-500/20 border border-yellow-500/30 flex items-center justify-center group-hover:bg-yellow-500/30 transition-colors">
+                        <GraduationCap className="h-3 w-3 text-yellow-400" />
+                      </div>
+                      <span className="text-[11px] text-white/90 font-medium capitalize">{displayProfile.education}</span>
+                    </div>
+                  </Card>
+                )}
+              </div>
+
+              {/* Fields of Interest */}
+              {displayProfile.fieldsOfInterest && displayProfile.fieldsOfInterest.length > 0 && (
+                <div>
+                  <Label className="text-[10px] font-medium text-white/50 uppercase tracking-wider mb-1.5 block">Fields of Interest</Label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {displayProfile.fieldsOfInterest.map((field, idx) => (
+                      <Badge 
+                        key={idx} 
+                        className="bg-gradient-to-r from-blue-500/20 to-cyan-500/20 text-blue-300 border-blue-400/40 px-1.5 py-0.5 text-[10px] font-medium hover:from-blue-500/30 hover:to-cyan-500/30 transition-all cursor-default"
+                      >
+                        {field}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Skills */}
+              {displayProfile.skills && displayProfile.skills.length > 0 && (
+                <div>
+                  <Label className="text-[10px] font-medium text-white/50 uppercase tracking-wider mb-1.5 block">Skills</Label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {displayProfile.skills.map((skill, idx) => (
+                      <Badge 
+                        key={idx} 
+                        className="bg-gradient-to-r from-green-500/20 to-emerald-500/20 text-green-300 border-green-400/40 px-1.5 py-0.5 text-[10px] font-medium hover:from-green-500/30 hover:to-emerald-500/30 transition-all cursor-default"
+                      >
+                        {skill}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Social Links */}
+              {displayProfile.socialLinks && Object.keys(displayProfile.socialLinks).length > 0 && (
+                <div>
+                  <Label className="text-[10px] font-medium text-white/50 uppercase tracking-wider mb-1.5 block">Social Links</Label>
+                  <div className="flex flex-wrap gap-2">
+                    {Object.entries(displayProfile.socialLinks).map(([platform, url]) => {
+                      const getIcon = () => {
+                        switch (platform.toLowerCase()) {
+                          case 'github':
+                            return <Github className="h-3.5 w-3.5" />;
+                          case 'linkedin':
+                            return <Linkedin className="h-3.5 w-3.5" />;
+                          case 'twitter':
+                            return <Twitter className="h-3.5 w-3.5" />;
+                          case 'instagram':
+                            return <Instagram className="h-3.5 w-3.5" />;
+                          case 'portfolio':
+                            return <Globe className="h-3.5 w-3.5" />;
+                          default:
+                            return <LinkIcon className="h-3.5 w-3.5" />;
+                        }
+                      };
+                      return (
+                        <a
+                          key={platform}
+                          href={url as string}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 px-2 py-1.5 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-all group"
+                        >
+                          <div className="text-white/70 group-hover:text-white transition-colors">
+                            {getIcon()}
+                          </div>
+                          <span className="text-[10px] font-medium text-white/80 group-hover:text-white capitalize">
+                            {platform}
+                          </span>
+                        </a>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </Card>
+
+        {/* Enrolled Courses */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-2xl font-bold text-white">My Courses</h2>
+            <Link to="/courses">
+              <Button variant="outline" size="sm" className="border-white/20 text-white hover:bg-white/10">
+                Browse All
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+            </Link>
+          </div>
+
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
+            <TabsList className="bg-white/5 border-white/10">
+              <TabsTrigger value="all" className="text-white data-[state=active]:bg-white data-[state=active]:text-black">
+                All
+              </TabsTrigger>
+              <TabsTrigger value="enrolled" className="text-white data-[state=active]:bg-white data-[state=active]:text-black">
+                Only Enrolled
+              </TabsTrigger>
+              <TabsTrigger value="in_progress" className="text-white data-[state=active]:bg-white data-[state=active]:text-black">
+                In Progress
+              </TabsTrigger>
+              <TabsTrigger value="completed" className="text-white data-[state=active]:bg-white data-[state=active]:text-black">
+                Completed
+              </TabsTrigger>
+              <TabsTrigger value="failed" className="text-white data-[state=active]:bg-white data-[state=active]:text-black">
+                Failed
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+
+          {enrolledCourses.length === 0 ? (
+            <Card className="p-12 text-center bg-white/5 backdrop-blur-md border-white/10">
+              <BookOpen className="h-12 w-12 mx-auto mb-4 text-white/60" />
+              <h3 className="text-lg font-semibold mb-2 text-white">No courses enrolled yet</h3>
+              <p className="text-white/80 mb-4">
+                Start your learning journey by enrolling in a course
+              </p>
+              <Link to="/courses">
+                <Button className="bg-white text-black hover:bg-white/90 border-2 border-white">Browse Courses</Button>
+              </Link>
+            </Card>
+          ) : (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {enrolledCourses
+                .filter((course) => {
+                  if (activeTab === "all") return true;
+                  return course.status === activeTab;
+                })
+                .map((course) => {
+                  const getStatusBadge = () => {
+                    const status = course.status || "enrolled";
+                    if (status === "completed")
+                      return <Badge className="bg-green-500/20 text-green-400 border-green-500/30"><CheckCircle2 className="h-3 w-3 mr-1" />Completed</Badge>;
+                    if (status === "failed")
+                      return <Badge className="bg-red-500/20 text-red-400 border-red-500/30"><XCircle className="h-3 w-3 mr-1" />Failed</Badge>;
+                    if (status === "in_progress")
+                      return <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30"><Play className="h-3 w-3 mr-1" />In Progress</Badge>;
+                    return <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">Enrolled</Badge>;
+                  };
+
+                  return (
+                    <Card key={course.id} className="overflow-hidden cred-hover bg-white/5 backdrop-blur-md border-white/10">
+                      <div className="aspect-video bg-white/5 relative">
+                        {course.thumbnail && (
+                          <img
+                            src={course.thumbnail}
+                            alt={course.title}
+                            className="w-full h-full object-cover"
+                          />
+                        )}
+                      </div>
+                      <div className="p-6">
+                        <div className="flex items-center justify-between mb-2">
+                          <h3 className="font-semibold line-clamp-2 text-white">{course.title}</h3>
+                        </div>
+                        <div className="flex items-center gap-2 mb-4">
+                          <Avatar className="h-6 w-6">
+                            <AvatarImage src={course.instructor?.avatar} />
+                            <AvatarFallback className="bg-white/10 text-white text-xs">{course.instructor?.name?.[0]}</AvatarFallback>
+                          </Avatar>
+                          <span className="text-sm text-white/60">{course.instructor?.name}</span>
+                        </div>
+                        <div className="mb-4">{getStatusBadge()}</div>
+                        <div className="space-y-2 mb-4">
+                          <div className="flex items-center justify-between text-sm">
+                            <span className="text-white/60">Progress</span>
+                            <span className="font-medium text-white">{course.progress || 0}%</span>
+                          </div>
+                          <Progress value={course.progress || 0} className="h-2" />
+                        </div>
+                        {course.status === "completed" && (
+                          <Link to={`/courses/${course.id}/assessment`} className="mb-2 block">
+                            <Button className="w-full bg-green-500 hover:bg-green-600 text-white">
+                              Take Assessment
+                            </Button>
+                          </Link>
+                        )}
+                        {course.status === "in_progress" || course.status === "enrolled" ? (
+                          <Link to={`/courses/${course.id}/learn`} className="block">
+                            <Button className="w-full border-white/20 text-white hover:bg-white/10" variant="outline">
+                              Continue Learning
+                            </Button>
+                          </Link>
+                        ) : null}
+                      </div>
+                    </Card>
+                  );
+                })}
+            </div>
+          )}
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
