@@ -23,12 +23,6 @@ import PaymentFailure from "./pages/payment/PaymentFailure";
 import Certificates from "./pages/certificates/Certificates";
 import Internships from "./pages/internships/Internships";
 import NotFound from "./pages/NotFound";
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import AdminCourses from "./pages/admin/AdminCourses";
-import AdminStudents from "./pages/admin/AdminStudents";
-import AdminAssessments from "./pages/admin/AdminAssessments";
-import AdminInterviews from "./pages/admin/AdminInterviews";
-import AdminLetters from "./pages/admin/AdminLetters";
 import CourseAssessment from "./pages/courses/CourseAssessment";
 import ScheduleInterview from "./pages/interviews/ScheduleInterview";
 import ViewLetters from "./pages/letters/ViewLetters";
@@ -66,14 +60,6 @@ const App = () => (
             
             {/* Letter Routes */}
             <Route path="/letters" element={<ViewLetters />} />
-            
-            {/* Admin Routes */}
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
-            <Route path="/admin/courses" element={<AdminCourses />} />
-            <Route path="/admin/students" element={<AdminStudents />} />
-            <Route path="/admin/assessments" element={<AdminAssessments />} />
-            <Route path="/admin/interviews" element={<AdminInterviews />} />
-            <Route path="/admin/letters" element={<AdminLetters />} />
             
             {/* Profile Routes */}
             <Route path="/profile/:username" element={<ProfileView />} />

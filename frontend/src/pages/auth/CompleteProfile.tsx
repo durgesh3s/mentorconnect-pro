@@ -145,7 +145,7 @@ export default function CompleteProfile() {
 
       setUser(updatedUser);
       toast.success("Profile completed successfully!");
-      navigate("/dashboard/" + updatedUser.role);
+      navigate("/dashboard/student");
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || error.response?.data?.errors?.[0]?.msg || "Failed to complete profile";
       toast.error(errorMessage);

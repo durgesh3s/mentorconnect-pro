@@ -39,7 +39,7 @@ export default function Callback() {
         
         // Redirect based on profile completion status
         if (response.user.isProfileComplete) {
-          navigate("/dashboard/" + response.user.role);
+          navigate("/dashboard/student");
         } else {
           navigate("/auth/complete-profile");
         }
