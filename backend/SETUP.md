@@ -25,6 +25,9 @@
    - `GOOGLE_CLIENT_ID`: Your Google OAuth Client ID
    - `GOOGLE_CLIENT_SECRET`: Your Google OAuth Client Secret
    - `GOOGLE_REDIRECT_URI`: Should match your frontend callback URL (e.g., `http://localhost:5173/auth/callback`)
+   - `ADMIN_EMAIL`: Email address for admin access (default: `durgesh.singh.sde@gmail.com`)
+     - Only the email specified here will have admin access to the admin panel
+     - This email must match the Google account email used for login
 
 3. **Get Google OAuth Credentials**
    - Go to [Google Cloud Console](https://console.cloud.google.com/)

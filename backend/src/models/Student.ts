@@ -1,5 +1,32 @@
 import mongoose, { Schema, Model, Document } from 'mongoose';
-import { IStudent, ICourseEnrollment, ITaggedPost, EducationLevel, CourseStatus, TagType, UserRole } from '../types/index.js';
+import { IStudent, ICourseEnrollment, ITaggedPost, EducationLevel, CourseStatus, TagType, UserRole, SubscriptionPlan } from '../types/index.js';
+
+const videoNoteSchema = new Schema({
+  videoId: {
+    type: String,
+    required: true,
+  },
+  notes: {
+    type: String,
+    default: '',
+    trim: true,
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now,
+  },
+});
+
+const completedVideoSchema = new Schema({
+  videoId: {
+    type: String,
+    required: true,
+  },
+  completedAt: {
+    type: Date,
+    default: Date.now,
+  },
+});
 
 const courseEnrollmentSchema = new Schema<ICourseEnrollment>({
   courseId: {
@@ -23,6 +50,22 @@ const courseEnrollmentSchema = new Schema<ICourseEnrollment>({
     min: 0,
     max: 100,
   },
+  plan: {
+    type: String,
+    enum: ['monthly', 'quarterly', 'annual'] as SubscriptionPlan[],
+  },
+  subscriptionAmount: {
+    type: Number,
+    min: 0,
+  },
+  subscriptionCurrency: {
+    type: String,
+    default: 'INR',
+    uppercase: true,
+  },
+  subscriptionExpiresAt: Date,
+  videoNotes: [videoNoteSchema],
+  completedVideos: [completedVideoSchema],
 });
 
 const taggedPostSchema = new Schema<ITaggedPost>({
@@ -175,7 +218,11 @@ studentSchema.virtual('followingCount').get(function () {
 // Method to add course enrollment
 studentSchema.methods.enrollInCourse = function (
   courseId: mongoose.Types.ObjectId,
-  status: CourseStatus = 'inprogress'
+  status: CourseStatus = 'inprogress',
+  plan?: SubscriptionPlan,
+  subscriptionAmount?: number,
+  subscriptionCurrency?: string,
+  subscriptionExpiresAt?: Date
 ): Promise<IStudent> {
   const existingEnrollment = this.coursesEnrolledIn.find(
     (enrollment: ICourseEnrollment) => enrollment.courseId.toString() === courseId.toString()
@@ -183,15 +230,26 @@ studentSchema.methods.enrollInCourse = function (
 
   if (existingEnrollment) {
     existingEnrollment.status = status;
+    if (plan) existingEnrollment.plan = plan;
+    if (subscriptionAmount !== undefined) existingEnrollment.subscriptionAmount = subscriptionAmount;
+    if (subscriptionCurrency) existingEnrollment.subscriptionCurrency = subscriptionCurrency;
+    if (subscriptionExpiresAt) existingEnrollment.subscriptionExpiresAt = subscriptionExpiresAt;
     return this.save() as Promise<IStudent>;
   }
 
-  this.coursesEnrolledIn.push({
+  const enrollmentData: any = {
     courseId,
     status,
     enrolledAt: new Date(),
     progress: 0,
-  });
+  };
+
+  if (plan) enrollmentData.plan = plan;
+  if (subscriptionAmount !== undefined) enrollmentData.subscriptionAmount = subscriptionAmount;
+  if (subscriptionCurrency) enrollmentData.subscriptionCurrency = subscriptionCurrency;
+  if (subscriptionExpiresAt) enrollmentData.subscriptionExpiresAt = subscriptionExpiresAt;
+
+  this.coursesEnrolledIn.push(enrollmentData);
 
   return this.save() as Promise<IStudent>;
 };

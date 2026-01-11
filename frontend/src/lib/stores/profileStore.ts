@@ -15,6 +15,7 @@ interface Thread {
   comments: number;
   shares: number;
   liked: boolean;
+  shared?: boolean;
   createdAt: string;
 }
 

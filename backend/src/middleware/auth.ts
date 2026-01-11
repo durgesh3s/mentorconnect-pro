@@ -47,8 +47,8 @@ export const authenticate = async (
 };
 
 export const isAdmin = (req: Request, res: Response, next: NextFunction): void => {
-  // Only allow durgesh.singh.sde@gmail.com to access admin panel
-  const ADMIN_EMAIL = 'durgesh.singh.sde@gmail.com';
+  // Get admin email from environment variable, fallback to default
+  const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'durgesh.singh.sde@gmail.com';
   
   if (req.user && req.user.email === ADMIN_EMAIL) {
     next();

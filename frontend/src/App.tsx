@@ -26,6 +26,14 @@ import NotFound from "./pages/NotFound";
 import CourseAssessment from "./pages/courses/CourseAssessment";
 import ScheduleInterview from "./pages/interviews/ScheduleInterview";
 import ViewLetters from "./pages/letters/ViewLetters";
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import StudentManagement from "./pages/admin/StudentManagement";
+import CourseManagement from "./pages/admin/CourseManagement";
+import CreateCourse from "./pages/admin/CreateCourse";
+import EditCourse from "./pages/admin/EditCourse";
+import SearchUsers from "./pages/users/SearchUsers";
+import FollowersList from "./pages/users/FollowersList";
+import FollowingList from "./pages/users/FollowingList";
 
 const queryClient = new QueryClient();
 
@@ -47,6 +55,13 @@ const App = () => (
             {/* Dashboard Routes */}
             <Route path="/dashboard/student" element={<StudentDashboard />} />
             
+            {/* Admin Routes */}
+            <Route path="/admin" element={<AdminDashboard />} />
+            <Route path="/admin/students" element={<StudentManagement />} />
+            <Route path="/admin/courses" element={<CourseManagement />} />
+            <Route path="/admin/courses/create" element={<CreateCourse />} />
+            <Route path="/admin/courses/:id/edit" element={<EditCourse />} />
+            
             {/* Course Routes */}
             <Route path="/courses" element={<CourseListing />} />
             <Route path="/courses/:id" element={<CourseDetail />} />
@@ -64,6 +79,11 @@ const App = () => (
             {/* Profile Routes */}
             <Route path="/profile/:username" element={<ProfileView />} />
             <Route path="/profile/edit" element={<ProfileEdit />} />
+            
+            {/* User Routes */}
+            <Route path="/users/search" element={<SearchUsers />} />
+            <Route path="/users/:username/followers" element={<FollowersList />} />
+            <Route path="/users/:username/following" element={<FollowingList />} />
             
             {/* Social Routes */}
             <Route path="/feed" element={<Feed />} />

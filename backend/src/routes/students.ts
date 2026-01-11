@@ -128,6 +128,162 @@ router.patch(
   }
 );
 
+// Search students
+router.get('/search', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { q, limit = '20', page = '1' } = req.query;
+    const searchQuery = (q as string) || '';
+
+    const pageNum = parseInt(page as string, 10);
+    const limitNum = parseInt(limit as string, 10);
+    const skip = (pageNum - 1) * limitNum;
+
+    // If query is empty, return empty results
+    if (!searchQuery.trim()) {
+      res.json({
+        students: [],
+        pagination: {
+          page: pageNum,
+          limit: limitNum,
+          total: 0,
+          pages: 0,
+        },
+      });
+      return;
+    }
+
+    // Search by username, name, or email (case-insensitive)
+    const searchRegex = new RegExp(searchQuery.trim(), 'i');
+    const searchFilter = {
+      $or: [
+        { username: searchRegex },
+        { name: searchRegex },
+        { email: searchRegex },
+      ],
+    };
+
+    const [students, total] = await Promise.all([
+      Student.find(searchFilter)
+        .select('username name avatar googleGmailPhoto description location education fieldsOfInterest')
+        .limit(limitNum)
+        .skip(skip)
+        .lean(),
+      Student.countDocuments(searchFilter),
+    ]);
+
+    // Convert socialLinks Map to object if needed
+    const studentsResponse = students.map((student: any) => {
+      if (student.socialLinks instanceof Map) {
+        student.socialLinks = Object.fromEntries(student.socialLinks);
+      }
+      return student;
+    });
+
+    res.json({
+      students: studentsResponse,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        pages: Math.ceil(total / limitNum),
+      },
+    });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    res.status(500).json({ message: 'Failed to search students', error: errorMessage });
+  }
+});
+
+// Get followers list
+router.get('/:username/followers', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { username } = req.params;
+    const { limit = '50', page = '1' } = req.query;
+
+    const student = await Student.findOne({ username }).select('followers');
+
+    if (!student) {
+      res.status(404).json({ message: 'Student not found' });
+      return;
+    }
+
+    const pageNum = parseInt(page as string, 10);
+    const limitNum = parseInt(limit as string, 10);
+    const skip = (pageNum - 1) * limitNum;
+
+    const followerIds = student.followers.slice(skip, skip + limitNum);
+    const followers = await Student.find({ _id: { $in: followerIds } })
+      .select('username name avatar googleGmailPhoto description location education fieldsOfInterest')
+      .lean();
+
+    // Convert socialLinks Map to object if needed
+    const followersResponse = followers.map((follower: any) => {
+      if (follower.socialLinks instanceof Map) {
+        follower.socialLinks = Object.fromEntries(follower.socialLinks);
+      }
+      return follower;
+    });
+
+    res.json({
+      followers: followersResponse,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total: student.followers.length,
+        pages: Math.ceil(student.followers.length / limitNum),
+      },
+    });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    res.status(500).json({ message: 'Failed to fetch followers', error: errorMessage });
+  }
+});
+
+// Get following list
+router.get('/:username/following', async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { username } = req.params;
+    const { limit = '50', page = '1' } = req.query;
+
+    const student = await Student.findOne({ username }).select('following');
+
+    if (!student) {
+      res.status(404).json({ message: 'Student not found' });
+      return;
+    }
+
+    const pageNum = parseInt(page as string, 10);
+    const limitNum = parseInt(limit as string, 10);
+    const skip = (pageNum - 1) * limitNum;
+
+    const followingIds = student.following.slice(skip, skip + limitNum);
+    const following = await Student.find({ _id: { $in: followingIds } })
+      .select('username name avatar googleGmailPhoto description location education fieldsOfInterest')
+      .lean();
+
+    // Convert socialLinks Map to object if needed
+    const followingResponse = following.map((followed: any) => {
+      if (followed.socialLinks instanceof Map) {
+        followed.socialLinks = Object.fromEntries(followed.socialLinks);
+      }
+      return followed;
+    });
+
+    res.json({
+      following: followingResponse,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total: student.following.length,
+        pages: Math.ceil(student.following.length / limitNum),
+      },
+    });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    res.status(500).json({ message: 'Failed to fetch following', error: errorMessage });
+  }
+});
+
 // Follow/Unfollow student
 router.post('/follow/:studentId', authenticate, async (req: Request, res: Response): Promise<void> => {
   try {
@@ -139,6 +295,7 @@ router.post('/follow/:studentId', authenticate, async (req: Request, res: Respon
     const user = req.user;
     const { studentId } = req.params;
     const currentStudent = await Student.findById(user._id);
+    // Need to include 'followers' field so we can modify it
     const targetStudent = await Student.findById(studentId);
 
     if (!currentStudent || !targetStudent) {
@@ -155,23 +312,63 @@ router.post('/follow/:studentId', authenticate, async (req: Request, res: Respon
       (id: mongoose.Types.ObjectId) => id.toString() === studentId
     );
 
+    const targetObjectId = new mongoose.Types.ObjectId(studentId);
+    const currentUserObjectId = user._id;
+
     if (isFollowing) {
-      // Unfollow
-      currentStudent.following = currentStudent.following.filter(
-        (id: mongoose.Types.ObjectId) => id.toString() !== studentId
-      );
-      targetStudent.followers = targetStudent.followers.filter(
-        (id: mongoose.Types.ObjectId) => id.toString() !== user._id.toString()
-      );
+      // Unfollow - use $pull to remove from arrays without triggering full document validation
+      await Promise.all([
+        Student.updateOne(
+          { _id: currentUserObjectId },
+          { $pull: { following: targetObjectId } }
+        ),
+        Student.updateOne(
+          { _id: targetObjectId },
+          { $pull: { followers: currentUserObjectId } }
+        ),
+      ]);
     } else {
-      // Follow
-      currentStudent.following.push(studentId as any);
-      targetStudent.followers.push(user._id);
+      // Follow - use $addToSet to add to arrays (prevents duplicates)
+      await Promise.all([
+        Student.updateOne(
+          { _id: currentUserObjectId },
+          { $addToSet: { following: targetObjectId } }
+        ),
+        Student.updateOne(
+          { _id: targetObjectId },
+          { $addToSet: { followers: currentUserObjectId } }
+        ),
+      ]);
     }
 
-    await Promise.all([currentStudent.save(), targetStudent.save()]);
+    // Fetch updated target student for response
+    const updatedTarget = await Student.findById(studentId)
+      .select('username name avatar googleGmailPhoto followers')
+      .lean();
 
-    res.json({ following: !isFollowing, followerCount: targetStudent.followers.length });
+    if (!updatedTarget) {
+      res.status(404).json({ message: 'Student not found' });
+      return;
+    }
+
+    // Prepare response with only the fields we need
+    const targetResponse: any = {
+      _id: updatedTarget._id,
+      id: updatedTarget._id.toString(),
+      username: updatedTarget.username,
+      name: updatedTarget.name,
+      avatar: updatedTarget.avatar,
+      googleGmailPhoto: updatedTarget.googleGmailPhoto,
+    };
+    if (updatedTarget.socialLinks instanceof Map) {
+      targetResponse.socialLinks = Object.fromEntries(updatedTarget.socialLinks);
+    }
+
+    res.json({
+      following: !isFollowing,
+      followerCount: updatedTarget.followers?.length || 0,
+      user: targetResponse,
+    });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     res.status(500).json({ message: 'Failed to update follow status', error: errorMessage });

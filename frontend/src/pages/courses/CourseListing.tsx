@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Search, Grid, List, Filter } from "lucide-react";
 import { Navigation } from "@/components/ui/navigation";
 
@@ -18,16 +19,52 @@ export default function CourseListing() {
   const [difficulty, setDifficulty] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("popularity");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchCourses = async () => {
+      setIsLoading(true);
       try {
-        const data = await apiClient.get<any[]>("/courses", {
+        const response = await apiClient.get<any>("/courses", {
           params: { category, difficulty, sortBy, search: searchQuery },
         });
-        setCourses(data);
+        
+        // Extract courses array from response
+        const coursesData = response.courses || response || [];
+        
+        // Transform backend course structure to frontend format
+        const transformedCourses = coursesData.map((course: any) => ({
+          id: course._id || course.id,
+          title: course.title,
+          description: course.description,
+          instructor: {
+            id: course.createdBy?._id || course.createdBy?.id || '',
+            name: course.instructor || course.createdBy?.name || 'Unknown',
+            avatar: course.createdBy?.avatar || course.createdBy?.googleGmailPhoto,
+          },
+          thumbnail: course.thumbnail || course.thumbnailUrl,
+          price: {
+            monthly: course.isFree ? 0 : (course.price || 0),
+            quarterly: course.isFree ? 0 : (course.price ? course.price * 3 : 0),
+            annual: course.isFree ? 0 : (course.price ? course.price * 12 : 0),
+          },
+          category: course.category,
+          difficulty: course.level || course.difficulty,
+          rating: course.averageRating || 0,
+          reviewCount: course.reviewCount || 0,
+          studentCount: course.enrollmentsCount || 0,
+          modules: [],
+          enrolled: course.isEnrolled || false,
+          progress: course.enrollment?.progress || 0,
+          status: course.enrollment?.status || undefined,
+        }));
+        
+        setCourses(transformedCourses);
       } catch (error) {
         console.error("Failed to fetch courses", error);
+        setCourses([]); // Set empty array on error
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -112,7 +149,40 @@ export default function CourseListing() {
         </div>
 
         {/* Courses Grid/List */}
-        {courses.length === 0 ? (
+        {isLoading ? (
+          viewMode === "grid" ? (
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {[...Array(6)].map((_, i) => (
+                <Card key={i} className="overflow-hidden bg-white/5 backdrop-blur-md border-white/10">
+                  <Skeleton className="aspect-video w-full bg-white/10" />
+                  <div className="p-6">
+                    <div className="flex items-start justify-between mb-2">
+                      <Skeleton className="h-5 w-20 bg-white/10" />
+                      <Skeleton className="h-5 w-16 bg-white/10" />
+                    </div>
+                    <Skeleton className="h-6 w-full mb-4 bg-white/10" />
+                    <Skeleton className="h-4 w-3/4 bg-white/10" />
+                  </div>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {[...Array(6)].map((_, i) => (
+                <Card key={i} className="bg-white/5 backdrop-blur-md border-white/10">
+                  <div className="flex gap-6 p-6">
+                    <Skeleton className="w-64 aspect-video rounded-lg bg-white/10" />
+                    <div className="flex-1 space-y-4">
+                      <Skeleton className="h-6 w-3/4 bg-white/10" />
+                      <Skeleton className="h-4 w-full bg-white/10" />
+                      <Skeleton className="h-4 w-2/3 bg-white/10" />
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )
+        ) : !courses || courses.length === 0 ? (
           <Card className="p-12 text-center bg-white/5 backdrop-blur-md border-white/10">
             <p className="text-white/80">No courses found. Try adjusting your filters.</p>
           </Card>

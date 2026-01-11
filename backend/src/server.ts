@@ -32,6 +32,15 @@ if (envPath) {
   } else {
     console.warn('⚠️  Cloudinary configuration missing in .env file');
   }
+  
+  // Verify YouTube API key is loaded
+  if (process.env.YOUTUBE_API_KEY) {
+    console.log('✅ YouTube API key detected in .env');
+    console.log(`   API Key prefix: ${process.env.YOUTUBE_API_KEY.substring(0, 10)}...`);
+  } else {
+    console.warn('⚠️  YouTube API key missing in .env file (YOUTUBE_API_KEY)');
+    console.warn('   Playlist video fetching will not work without this key');
+  }
 } else {
   console.warn('⚠️  .env file not found. Tried:', possiblePaths);
   // Fallback to default dotenv behavior
@@ -48,6 +57,9 @@ import studentRoutes from './routes/students.js';
 import adminRoutes from './routes/admin.js';
 import uploadRoutes from './routes/upload.js';
 import dashboardRoutes from './routes/dashboard.js';
+import courseRoutes from './routes/courses.js';
+import feedRoutes from './routes/feed.js';
+import threadRoutes from './routes/threads.js';
 
 // Initialize Express app
 const app = express();
@@ -71,6 +83,9 @@ app.use('/api/students', studentRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/courses', courseRoutes);
+app.use('/api/feed', feedRoutes);
+app.use('/api/threads', threadRoutes);
 
 // 404 handler
 app.use((_req: Request, res: Response): void => {

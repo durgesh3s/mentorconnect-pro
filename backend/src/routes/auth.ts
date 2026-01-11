@@ -138,8 +138,8 @@ router.post('/callback', async (req: Request<{}, {}, CallbackRequestBody>, res: 
       $or: [{ email: googleUser.email }, { googleId: googleUser.googleId }],
     });
 
-    // Only durgesh.singh.sde@gmail.com can be admin
-    const ADMIN_EMAIL = 'durgesh.singh.sde@gmail.com';
+    // Get admin email from environment variable, fallback to default
+    const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'durgesh.singh.sde@gmail.com';
     const isAdminUser = googleUser.email === ADMIN_EMAIL;
     const userRole: UserRole = isAdminUser ? 'admin' : 'student';
 

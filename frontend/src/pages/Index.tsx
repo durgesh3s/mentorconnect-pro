@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Navigation } from "@/components/ui/navigation";
 import { useProfileStore } from "@/lib/stores/profileStore";
 import { useCourseStore } from "@/lib/stores/courseStore";
+import { useAuthStore } from "@/lib/stores/authStore";
 import { apiClient } from "@/lib/api/client";
 import {
   GraduationCap,
@@ -55,6 +56,7 @@ function AnimatedCounter({ target, suffix = "" }: { target: number; suffix?: str
 export default function Index() {
   const { setThreads } = useProfileStore();
   const { setCourses } = useCourseStore();
+  const { isAuthenticated } = useAuthStore();
   const [featuredThreads, setFeaturedThreads] = useState<any[]>([]);
   const [featuredCourses, setFeaturedCourses] = useState<any[]>([]);
   const [videoLoading, setVideoLoading] = useState(true);
@@ -82,22 +84,51 @@ export default function Index() {
           ]);
         }
 
-        const coursesResponse = await apiClient.get<any>("/courses", { params: { featured: true, limit: 6 } });
-        // Handle different response structures
-        const coursesData = Array.isArray(coursesResponse)
-          ? coursesResponse
-          : coursesResponse?.data || coursesResponse?.courses || [];
-        
-        if (Array.isArray(coursesData) && coursesData.length > 0) {
-          setFeaturedCourses(coursesData);
-          setCourses(coursesData);
-        } else {
-          // Fallback mock data
-          setFeaturedCourses([
-            { id: "1", title: "Complete React Mastery", instructor: { name: "Sarah Williams" }, thumbnail: "", rating: 4.8, studentCount: 120, price: { monthly: 999 } },
-            { id: "2", title: "Advanced JavaScript Patterns", instructor: { name: "David Chen" }, thumbnail: "", rating: 4.9, studentCount: 95, price: { monthly: 1299 } },
-            { id: "3", title: "Data Structures & Algorithms", instructor: { name: "Emily Brown" }, thumbnail: "", rating: 4.7, studentCount: 200, price: { monthly: 1499 } },
-          ]);
+        try {
+          const coursesResponse = await apiClient.get<any>("/courses", { params: { limit: 6, sortBy: 'popularity' } });
+          // Handle response structure: { courses: [], pagination: {} }
+          const coursesData = coursesResponse?.courses || [];
+          
+          if (Array.isArray(coursesData) && coursesData.length > 0) {
+            // Transform backend course structure to match rendering format
+            const transformedCourses = coursesData.map((course: any) => {
+              const instructorName = course.instructor || course.createdBy?.name || 'Unknown';
+              const initial = instructorName.charAt(0).toUpperCase();
+              const durationHours = course.duration ? Math.round(course.duration / 60) : 20; // Convert minutes to hours
+              
+              // Generate thumbnail URL if not provided
+              let thumbnail = course.thumbnail || course.thumbnailUrl;
+              if (!thumbnail && course.youtubeId) {
+                // Generate YouTube thumbnail URL
+                if (course.youtubeType === 'video') {
+                  thumbnail = `https://img.youtube.com/vi/${course.youtubeId}/hqdefault.jpg`;
+                } else if (course.youtubeType === 'playlist' && course.videos && course.videos.length > 0) {
+                  thumbnail = `https://img.youtube.com/vi/${course.videos[0].videoId}/hqdefault.jpg`;
+                }
+              }
+              
+              return {
+                id: course._id || course.id,
+                title: course.title,
+                instructor: instructorName,
+                initial: initial,
+                rating: course.averageRating || 0,
+                students: course.enrollmentsCount || 0,
+                price: course.isFree ? 0 : (course.price || 0),
+                duration: durationHours,
+                thumbnail: thumbnail,
+              };
+            });
+            
+            setFeaturedCourses(transformedCourses);
+            setCourses(coursesData);
+          } else {
+            setFeaturedCourses([]);
+          }
+        } catch (courseError) {
+          // If courses endpoint fails (e.g., not authenticated), set empty array
+          console.error("Failed to fetch courses", courseError);
+          setFeaturedCourses([]);
         }
       } catch (error) {
         console.error("Failed to fetch data", error);
@@ -107,11 +138,7 @@ export default function Index() {
           { id: "2", author: { name: "Jane Smith", username: "janesmith", avatar: "" }, content: "The DSA course is amazing! Solved 50+ problems this week. The instructor's explanations are crystal clear. #DSA #Coding", likes: 18, comments: 3, createdAt: "5h ago" },
           { id: "3", author: { name: "Mike Johnson", username: "mikej", avatar: "" }, content: "Got my first internship offer! Thanks to CodeMentor Pro for the amazing learning experience. #Success #Career", likes: 42, comments: 12, createdAt: "1d ago" },
         ]);
-        setFeaturedCourses([
-          { id: "1", title: "Complete React Mastery", instructor: { name: "Sarah Williams" }, thumbnail: "", rating: 4.8, studentCount: 120, price: { monthly: 999 } },
-          { id: "2", title: "Advanced JavaScript Patterns", instructor: { name: "David Chen" }, thumbnail: "", rating: 4.9, studentCount: 95, price: { monthly: 1299 } },
-          { id: "3", title: "Data Structures & Algorithms", instructor: { name: "Emily Brown" }, thumbnail: "", rating: 4.7, studentCount: 200, price: { monthly: 1499 } },
-        ]);
+        setFeaturedCourses([]);
       } finally {
         setLoading(false);
       }
@@ -161,19 +188,31 @@ export default function Index() {
               students get guaranteed 3-month internships.
             </p>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-2">
-              <Link to="/auth/select-role">
-                <Button size="lg" className="bg-foreground text-background hover:bg-foreground/90 text-lg px-8 h-14 border-2 border-foreground">
-                  Start Learning Now
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-              <Link to="/courses">
-                <Button size="lg" className="bg-foreground text-background hover:bg-foreground/90 text-lg px-8 h-14 border-2 border-foreground">
-                  Browse Courses
-                </Button>
-              </Link>
-            </div>
+            {!isAuthenticated && (
+              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-2">
+                <Link to="/auth/select-role">
+                  <Button size="lg" className="bg-foreground text-background hover:bg-foreground/90 text-lg px-8 h-14 border-2 border-foreground">
+                    Start Learning Now
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
+                </Link>
+                <Link to="/courses">
+                  <Button size="lg" className="bg-foreground text-background hover:bg-foreground/90 text-lg px-8 h-14 border-2 border-foreground">
+                    Browse Courses
+                  </Button>
+                </Link>
+              </div>
+            )}
+            
+            {isAuthenticated && (
+              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-2">
+                <Link to="/courses">
+                  <Button size="lg" className="bg-foreground text-background hover:bg-foreground/90 text-lg px-8 h-14 border-2 border-foreground">
+                    Browse Courses
+                  </Button>
+                </Link>
+              </div>
+            )}
 
             {/* Stats */}
             <div className="grid grid-cols-3 gap-8 max-w-3xl mx-auto pt-8">
@@ -200,49 +239,90 @@ export default function Index() {
         </div>
       </section>
 
-      {/* 3D Workflow Section - Marquee */}
-      <section id="how-it-works" className="relative py-16 px-4 z-10">
-        <div className="container mx-auto max-w-7xl">
+      {/* Featured Tutorials Section - Marquee */}
+      <section className="relative py-16 px-4 z-10">
+        <div className="container mx-auto max-w-6xl">
           <div className="mb-12 animate-fade-in-up">
             <Badge className="bg-foreground/10 backdrop-blur-sm border border-foreground/20 px-4 py-1.5 text-foreground mb-4">
-              How It Works
+              Popular Courses
             </Badge>
-            <h2 className="text-4xl md:text-6xl font-bold text-foreground mb-4">
-              Your Journey to Success
+            <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-2">
+              Start Learning Today
+              <span className="block text-foreground mt-2">Featured Tutorials</span>
             </h2>
-            <p className="text-foreground/80 text-lg">Simple 3-step process to launch your career</p>
+            <p className="text-foreground/80">Hand-picked courses from industry experts</p>
           </div>
 
           {/* Marquee Container */}
-          <div className="marquee-container mt-16">
+          <div className="marquee-container mt-12">
             <div className="marquee-content">
-              {/* Original 3 cards */}
-              {[
-                { num: "1", title: "Choose Your Path", desc: "Browse courses in JavaScript, React, Next.js, and DSA. Select the perfect course matching your skill level and goals.", feature: "30-50 students per course" },
-                { num: "2", title: "Learn & Excel", desc: "Complete modules, submit assignments, and work on real-world projects. Track your progress on the leaderboard.", feature: "Monthly/Quarterly subscriptions" },
-                { num: "3", title: "Get Hired", desc: "Top performers receive guaranteed 3-month internship offers. Start your career with real industry experience.", feature: "Top 5-10 students guaranteed" },
-                // Duplicate for seamless loop + 3 more cards
-                { num: "4", title: "Build Portfolio", desc: "Create real-world projects that showcase your skills. Add them to your portfolio and impress employers.", feature: "Project-based learning" },
-                { num: "5", title: "Get Certified", desc: "Earn industry-recognized certificates upon course completion. Validate your skills to employers.", feature: "Verified certificates" },
-                { num: "6", title: "Join Network", desc: "Connect with peers and industry professionals. Build your professional network.", feature: "Community access" },
-              ].map((step, idx) => (
-                <div
-                  key={idx}
-                  className="flex-shrink-0 w-[400px] md:w-[500px]"
-                >
-                  <div className="bg-card/50 backdrop-blur-md border border-border rounded-3xl p-8 h-full transform transition-all duration-500 hover:scale-105 hover:-translate-y-4">
-                    <div className="w-20 h-20 bg-foreground/10 rounded-2xl flex items-center justify-center mb-6 border border-border">
-                      <span className="text-4xl font-bold text-foreground">{step.num}</span>
-                    </div>
-                    <h3 className="text-2xl font-bold text-foreground mb-4">{step.title}</h3>
-                    <p className="text-foreground/70 leading-relaxed mb-6">{step.desc}</p>
-                    <div className="flex items-center gap-2 text-sm text-foreground">
-                      <CheckCircle2 className="h-4 w-4" />
-                      <span>{step.feature}</span>
-                    </div>
+              {featuredCourses.length > 0 ? (
+                // Render real courses
+                featuredCourses.map((course) => (
+                  <div key={course.id} className="flex-shrink-0 w-[350px] md:w-[400px]">
+                    <Card className="overflow-hidden cred-hover border-border bg-card/50 backdrop-blur-md h-full">
+                      <Link to={`/courses/${course.id}`}>
+                        <div className="aspect-video bg-foreground/5 relative overflow-hidden">
+                          {course.thumbnail ? (
+                            <img
+                              src={course.thumbnail}
+                              alt={course.title}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = 'none';
+                                const parent = target.parentElement;
+                                if (parent) {
+                                  const fallback = parent.querySelector('.thumbnail-fallback') as HTMLElement;
+                                  if (fallback) fallback.style.display = 'flex';
+                                }
+                              }}
+                            />
+                          ) : null}
+                          <div className={`thumbnail-fallback w-full h-full flex items-center justify-center ${course.thumbnail ? 'hidden' : ''}`}>
+                            <Play className="h-12 w-12 text-foreground/20" />
+                          </div>
+                          <div className="absolute top-4 right-4">
+                            <Badge className="bg-background/50 backdrop-blur-sm border border-border text-foreground">
+                              <Star className="h-3 w-3 mr-1 fill-foreground text-foreground" />
+                              {course.rating > 0 ? course.rating.toFixed(1) : 'N/A'}
+                            </Badge>
+                          </div>
+                        </div>
+                        <div className="p-6">
+                          <h3 className="font-semibold mb-2 line-clamp-2 text-foreground">{course.title}</h3>
+                          <div className="flex items-center gap-2 mb-4">
+                            <Avatar className="h-6 w-6">
+                              <AvatarFallback className="bg-foreground/10 text-foreground text-xs">{course.initial}</AvatarFallback>
+                            </Avatar>
+                            <span className="text-sm text-foreground/60">{course.instructor}</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-4 text-sm text-foreground/60">
+                              <span className="flex items-center gap-1">
+                                <Users className="h-4 w-4" />
+                                {course.students}
+                              </span>
+                              <span className="flex items-center gap-1">
+                                <Clock className="h-4 w-4" />
+                                {course.duration || 20}h
+                              </span>
+                            </div>
+                            <span className="text-lg font-bold text-foreground">
+                              {course.price > 0 ? `₹${course.price}/mo` : 'Free'}
+                            </span>
+                          </div>
+                        </div>
+                      </Link>
+                    </Card>
                   </div>
+                ))
+              ) : (
+                // Show message if no courses available
+                <div className="flex-shrink-0 w-full text-center py-8">
+                  <p className="text-foreground/60">No courses available at the moment.</p>
                 </div>
-              ))}
+              )}
             </div>
           </div>
         </div>
@@ -348,70 +428,47 @@ export default function Index() {
         </div>
       </section>
 
-      {/* Featured Tutorials Section - Marquee */}
-      <section className="relative py-16 px-4 z-10">
-        <div className="container mx-auto max-w-6xl">
+      {/* 3D Workflow Section - Marquee */}
+      <section id="how-it-works" className="relative py-16 px-4 z-10">
+        <div className="container mx-auto max-w-7xl">
           <div className="mb-12 animate-fade-in-up">
             <Badge className="bg-foreground/10 backdrop-blur-sm border border-foreground/20 px-4 py-1.5 text-foreground mb-4">
-              Popular Courses
+              How It Works
             </Badge>
-            <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-2">
-              Start Learning Today
-              <span className="block text-foreground mt-2">Featured Tutorials</span>
+            <h2 className="text-4xl md:text-6xl font-bold text-foreground mb-4">
+              Your Journey to Success
             </h2>
-            <p className="text-foreground/80">Hand-picked courses from industry experts</p>
+            <p className="text-foreground/80 text-lg">Simple 3-step process to launch your career</p>
           </div>
 
           {/* Marquee Container */}
-          <div className="marquee-container mt-12">
+          <div className="marquee-container mt-16">
             <div className="marquee-content">
+              {/* Original 3 cards */}
               {[
-                { title: "Complete React Mastery", instructor: "Sarah Williams", initial: "S", rating: 4.8, students: 120, price: 999 },
-                { title: "Advanced JavaScript Patterns", instructor: "David Chen", initial: "D", rating: 4.9, students: 95, price: 1299 },
-                { title: "Data Structures & Algorithms", instructor: "Emily Brown", initial: "E", rating: 4.7, students: 200, price: 1499 },
-                // Duplicate + 3 more
-                { title: "Next.js Full Stack Development", instructor: "Alex Kumar", initial: "A", rating: 4.9, students: 150, price: 1199 },
-                { title: "System Design Masterclass", instructor: "Priya Sharma", initial: "P", rating: 4.8, students: 180, price: 1599 },
-                { title: "TypeScript Advanced Patterns", instructor: "Raj Patel", initial: "R", rating: 4.7, students: 110, price: 1099 },
-              ].map((course, idx) => (
-                <div key={idx} className="flex-shrink-0 w-[350px] md:w-[400px]">
-                  <Card className="overflow-hidden cred-hover border-border bg-card/50 backdrop-blur-md h-full">
-                    <Link to={`/courses/${idx + 1}`}>
-                      <div className="aspect-video bg-foreground/5 relative">
-                        <div className="w-full h-full flex items-center justify-center">
-                          <Play className="h-12 w-12 text-foreground/20" />
-                        </div>
-                        <div className="absolute top-4 right-4">
-                          <Badge className="bg-background/50 backdrop-blur-sm border border-border text-foreground">
-                            <Star className="h-3 w-3 mr-1 fill-foreground text-foreground" />
-                            {course.rating}
-                          </Badge>
-                        </div>
-                      </div>
-                      <div className="p-6">
-                        <h3 className="font-semibold mb-2 line-clamp-2 text-foreground">{course.title}</h3>
-                        <div className="flex items-center gap-2 mb-4">
-                          <Avatar className="h-6 w-6">
-                            <AvatarFallback className="bg-foreground/10 text-foreground text-xs">{course.initial}</AvatarFallback>
-                          </Avatar>
-                          <span className="text-sm text-foreground/60">{course.instructor}</span>
-                        </div>
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-4 text-sm text-foreground/60">
-                            <span className="flex items-center gap-1">
-                              <Users className="h-4 w-4" />
-                              {course.students}
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <Clock className="h-4 w-4" />
-                              20h
-                            </span>
-                          </div>
-                          <span className="text-lg font-bold text-foreground">₹{course.price}/mo</span>
-                        </div>
-                      </div>
-                    </Link>
-                  </Card>
+                { num: "1", title: "Choose Your Path", desc: "Browse courses in JavaScript, React, Next.js, and DSA. Select the perfect course matching your skill level and goals.", feature: "30-50 students per course" },
+                { num: "2", title: "Learn & Excel", desc: "Complete modules, submit assignments, and work on real-world projects. Track your progress on the leaderboard.", feature: "Monthly/Quarterly subscriptions" },
+                { num: "3", title: "Get Hired", desc: "Top performers receive guaranteed 3-month internship offers. Start your career with real industry experience.", feature: "Top 5-10 students guaranteed" },
+                // Duplicate for seamless loop + 3 more cards
+                { num: "4", title: "Build Portfolio", desc: "Create real-world projects that showcase your skills. Add them to your portfolio and impress employers.", feature: "Project-based learning" },
+                { num: "5", title: "Get Certified", desc: "Earn industry-recognized certificates upon course completion. Validate your skills to employers.", feature: "Verified certificates" },
+                { num: "6", title: "Join Network", desc: "Connect with peers and industry professionals. Build your professional network.", feature: "Community access" },
+              ].map((step, idx) => (
+                <div
+                  key={idx}
+                  className="flex-shrink-0 w-[400px] md:w-[500px]"
+                >
+                  <div className="bg-card/50 backdrop-blur-md border border-border rounded-3xl p-8 h-full transform transition-all duration-500 hover:scale-105 hover:-translate-y-4">
+                    <div className="w-20 h-20 bg-foreground/10 rounded-2xl flex items-center justify-center mb-6 border border-border">
+                      <span className="text-4xl font-bold text-foreground">{step.num}</span>
+                    </div>
+                    <h3 className="text-2xl font-bold text-foreground mb-4">{step.title}</h3>
+                    <p className="text-foreground/70 leading-relaxed mb-6">{step.desc}</p>
+                    <div className="flex items-center gap-2 text-sm text-foreground">
+                      <CheckCircle2 className="h-4 w-4" />
+                      <span>{step.feature}</span>
+                    </div>
+                  </div>
                 </div>
               ))}
             </div>
@@ -420,26 +477,28 @@ export default function Index() {
       </section>
 
       {/* CTA Section */}
-      <section className="relative py-16 px-4 z-10">
-        <div className="container mx-auto max-w-4xl">
-          <Card className="relative overflow-hidden p-12 border-2 border-foreground bg-card/50 backdrop-blur-md animate-zoom-in">
-            <div className="text-center space-y-6 text-foreground">
-              <h2 className="text-4xl md:text-5xl font-bold">Ready to Start Your Journey?</h2>
-              <p className="text-xl text-foreground/80 max-w-2xl mx-auto">
-                Join thousands of students learning from industry experts and landing their dream internships.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-                <Link to="/auth/select-role">
-                  <Button size="lg" className="text-lg px-8 h-14 bg-foreground text-background hover:bg-foreground/90 cred-hover border-2 border-foreground">
-                    Create Account
-                    <ArrowRight className="ml-2 h-5 w-5" />
-                  </Button>
-                </Link>
+      {!isAuthenticated && (
+        <section className="relative py-16 px-4 z-10">
+          <div className="container mx-auto max-w-4xl">
+            <Card className="relative overflow-hidden p-12 border-2 border-foreground bg-card/50 backdrop-blur-md animate-zoom-in">
+              <div className="text-center space-y-6 text-foreground">
+                <h2 className="text-4xl md:text-5xl font-bold">Ready to Start Your Journey?</h2>
+                <p className="text-xl text-foreground/80 max-w-2xl mx-auto">
+                  Join thousands of students learning from industry experts and landing their dream internships.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
+                  <Link to="/auth/select-role">
+                    <Button size="lg" className="text-lg px-8 h-14 bg-foreground text-background hover:bg-foreground/90 cred-hover border-2 border-foreground">
+                      Create Account
+                      <ArrowRight className="ml-2 h-5 w-5" />
+                    </Button>
+                  </Link>
+                </div>
               </div>
-            </div>
-          </Card>
-        </div>
-      </section>
+            </Card>
+          </div>
+        </section>
+      )}
 
       {/* Footer */}
       <footer className="relative border-t border-border py-12 px-4 bg-background/50 backdrop-blur-sm z-10">

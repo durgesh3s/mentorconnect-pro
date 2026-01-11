@@ -147,6 +147,52 @@ router.get('/students', async (req: Request<{}, {}, {}, StudentsQueryParams>, re
   }
 });
 
+// Get student statistics (must be before /students/:id route)
+router.get('/students/stats', async (_req: Request, res: Response): Promise<void> => {
+  try {
+    const [
+      totalStudents,
+      completedProfiles,
+      enrolledStudents,
+      educationStats,
+      locationStats,
+    ] = await Promise.all([
+      Student.countDocuments(),
+      Student.countDocuments({ isProfileComplete: true }),
+      Student.countDocuments({ 'coursesEnrolledIn.0': { $exists: true } }),
+      Student.aggregate([
+        {
+          $group: {
+            _id: '$education',
+            count: { $sum: 1 },
+          },
+        },
+      ]),
+      Student.aggregate([
+        {
+          $group: {
+            _id: '$location',
+            count: { $sum: 1 },
+          },
+        },
+        { $sort: { count: -1 } },
+        { $limit: 10 },
+      ]),
+    ]);
+
+    res.json({
+      totalStudents,
+      completedProfiles,
+      enrolledStudents,
+      educationStats,
+      topLocations: locationStats,
+    });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    res.status(500).json({ message: 'Failed to fetch statistics', error: errorMessage });
+  }
+});
+
 // Get single student details
 router.get('/students/:id', async (req: Request, res: Response): Promise<void> => {
   try {
@@ -206,7 +252,8 @@ router.patch('/students/:id', async (req: Request<{ id: string }, {}, UpdateStud
     });
 
     // Ensure role is always set correctly based on email
-    const ADMIN_EMAIL = 'durgesh.singh.sde@gmail.com';
+    // Get admin email from environment variable, fallback to default
+    const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'durgesh.singh.sde@gmail.com';
     student.role = student.email === ADMIN_EMAIL ? 'admin' : 'student';
 
     await student.save();
@@ -242,52 +289,6 @@ router.delete('/students/:id', async (req: Request, res: Response): Promise<void
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     res.status(500).json({ message: 'Failed to delete student', error: errorMessage });
-  }
-});
-
-// Get student statistics
-router.get('/students/stats', async (_req: Request, res: Response): Promise<void> => {
-  try {
-    const [
-      totalStudents,
-      completedProfiles,
-      enrolledStudents,
-      educationStats,
-      locationStats,
-    ] = await Promise.all([
-      Student.countDocuments(),
-      Student.countDocuments({ isProfileComplete: true }),
-      Student.countDocuments({ 'coursesEnrolledIn.0': { $exists: true } }),
-      Student.aggregate([
-        {
-          $group: {
-            _id: '$education',
-            count: { $sum: 1 },
-          },
-        },
-      ]),
-      Student.aggregate([
-        {
-          $group: {
-            _id: '$location',
-            count: { $sum: 1 },
-          },
-        },
-        { $sort: { count: -1 } },
-        { $limit: 10 },
-      ]),
-    ]);
-
-    res.json({
-      totalStudents,
-      completedProfiles,
-      enrolledStudents,
-      educationStats,
-      topLocations: locationStats,
-    });
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    res.status(500).json({ message: 'Failed to fetch statistics', error: errorMessage });
   }
 });
 

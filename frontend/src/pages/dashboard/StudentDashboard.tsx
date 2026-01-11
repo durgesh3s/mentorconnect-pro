@@ -58,33 +58,49 @@ export default function StudentDashboard() {
   const [activeTab, setActiveTab] = useState<string>("all");
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [coursesLoading, setCoursesLoading] = useState(false);
 
+  // Fetch user profile once on mount
   useEffect(() => {
     if (!user) return;
 
-    const fetchDashboardData = async () => {
+    const fetchProfile = async () => {
       try {
-        setLoading(true);
-        
-        // Fetch user profile
         const profileData = await apiClient.get<UserProfile>(`/students/${user.username}`);
         setProfile(profileData);
-
-        // Fetch enrolled courses
-        const data = await apiClient.get<{
-          enrolledCourses: any[];
-        }>("/dashboard/student");
-
-        setEnrolledCourses(data.enrolledCourses || []);
       } catch (error) {
-        console.error("Failed to fetch dashboard data", error);
-      } finally {
-        setLoading(false);
+        console.error("Failed to fetch profile", error);
       }
     };
 
-    fetchDashboardData();
-  }, [user, setEnrolledCourses]);
+    fetchProfile();
+  }, [user]);
+
+  // Fetch enrolled courses with filter
+  const fetchCourses = async (status?: string) => {
+    if (!user) return;
+
+    try {
+      setCoursesLoading(true);
+      const params = status && status !== "all" ? `?status=${status}` : "";
+      const data = await apiClient.get<{
+        enrolledCourses: any[];
+      }>(`/dashboard/student${params}`);
+
+      setEnrolledCourses(data.enrolledCourses || []);
+    } catch (error) {
+      console.error("Failed to fetch courses", error);
+    } finally {
+      setCoursesLoading(false);
+      setLoading(false);
+    }
+  };
+
+  // Initial fetch and fetch on tab change
+  useEffect(() => {
+    if (!user) return;
+    fetchCourses(activeTab);
+  }, [user, activeTab]);
 
   if (!user) {
     return null;
@@ -177,20 +193,24 @@ export default function StudentDashboard() {
 
               {/* Stats Cards */}
               <div className="grid grid-cols-3 gap-2">
-                <Card className="p-2 bg-white/5 border-white/10 hover:bg-white/10 transition-all cursor-pointer group">
-                  <div className="flex flex-col items-center text-center">
-                    <Users className="h-3.5 w-3.5 text-blue-400 mb-1 group-hover:scale-110 transition-transform" />
-                    <span className="text-lg font-bold text-white">{followersCount}</span>
-                    <span className="text-[10px] text-white/60 uppercase tracking-wider">Followers</span>
-                  </div>
-                </Card>
-                <Card className="p-2 bg-white/5 border-white/10 hover:bg-white/10 transition-all cursor-pointer group">
-                  <div className="flex flex-col items-center text-center">
-                    <Users className="h-3.5 w-3.5 text-purple-400 mb-1 group-hover:scale-110 transition-transform" />
-                    <span className="text-lg font-bold text-white">{followingCount}</span>
-                    <span className="text-[10px] text-white/60 uppercase tracking-wider">Following</span>
-                  </div>
-                </Card>
+                <Link to={`/users/${displayProfile.username}/followers`}>
+                  <Card className="p-2 bg-white/5 border-white/10 hover:bg-white/10 transition-all cursor-pointer group">
+                    <div className="flex flex-col items-center text-center">
+                      <Users className="h-3.5 w-3.5 text-blue-400 mb-1 group-hover:scale-110 transition-transform" />
+                      <span className="text-lg font-bold text-white">{followersCount}</span>
+                      <span className="text-[10px] text-white/60 uppercase tracking-wider">Followers</span>
+                    </div>
+                  </Card>
+                </Link>
+                <Link to={`/users/${displayProfile.username}/following`}>
+                  <Card className="p-2 bg-white/5 border-white/10 hover:bg-white/10 transition-all cursor-pointer group">
+                    <div className="flex flex-col items-center text-center">
+                      <Users className="h-3.5 w-3.5 text-purple-400 mb-1 group-hover:scale-110 transition-transform" />
+                      <span className="text-lg font-bold text-white">{followingCount}</span>
+                      <span className="text-[10px] text-white/60 uppercase tracking-wider">Following</span>
+                    </div>
+                  </Card>
+                </Link>
                 <Card className="p-2 bg-white/5 border-white/10 hover:bg-white/10 transition-all cursor-pointer group">
                   <div className="flex flex-col items-center text-center">
                     <BookOpen className="h-3.5 w-3.5 text-green-400 mb-1 group-hover:scale-110 transition-transform" />
@@ -348,7 +368,7 @@ export default function StudentDashboard() {
               <TabsTrigger value="enrolled" className="text-white data-[state=active]:bg-white data-[state=active]:text-black">
                 Only Enrolled
               </TabsTrigger>
-              <TabsTrigger value="in_progress" className="text-white data-[state=active]:bg-white data-[state=active]:text-black">
+              <TabsTrigger value="inprogress" className="text-white data-[state=active]:bg-white data-[state=active]:text-black">
                 In Progress
               </TabsTrigger>
               <TabsTrigger value="completed" className="text-white data-[state=active]:bg-white data-[state=active]:text-black">
@@ -360,80 +380,123 @@ export default function StudentDashboard() {
             </TabsList>
           </Tabs>
 
-          {enrolledCourses.length === 0 ? (
+          {coursesLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="text-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                <p className="text-white/80">Loading courses...</p>
+              </div>
+            </div>
+          ) : enrolledCourses.length === 0 ? (
             <Card className="p-12 text-center bg-white/5 backdrop-blur-md border-white/10">
               <BookOpen className="h-12 w-12 mx-auto mb-4 text-white/60" />
-              <h3 className="text-lg font-semibold mb-2 text-white">No courses enrolled yet</h3>
+              <h3 className="text-lg font-semibold mb-2 text-white">No courses found</h3>
               <p className="text-white/80 mb-4">
-                Start your learning journey by enrolling in a course
+                {activeTab === "all" 
+                  ? "Start your learning journey by enrolling in a course"
+                  : `No courses with status "${activeTab}" found`}
               </p>
+              {activeTab !== "all" && (
+                <Button 
+                  variant="outline" 
+                  onClick={() => setActiveTab("all")}
+                  className="mr-2 border-white/20 text-white hover:bg-white/10"
+                >
+                  View All Courses
+                </Button>
+              )}
               <Link to="/courses">
                 <Button className="bg-white text-black hover:bg-white/90 border-2 border-white">Browse Courses</Button>
               </Link>
             </Card>
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {enrolledCourses
-                .filter((course) => {
-                  if (activeTab === "all") return true;
-                  return course.status === activeTab;
-                })
-                .map((course) => {
+              {enrolledCourses.map((course) => {
                   const getStatusBadge = () => {
-                    const status = course.status || "enrolled";
+                    const status = course.status || "inprogress";
                     if (status === "completed")
                       return <Badge className="bg-green-500/20 text-green-400 border-green-500/30"><CheckCircle2 className="h-3 w-3 mr-1" />Completed</Badge>;
                     if (status === "failed")
                       return <Badge className="bg-red-500/20 text-red-400 border-red-500/30"><XCircle className="h-3 w-3 mr-1" />Failed</Badge>;
-                    if (status === "in_progress")
+                    if (status === "inprogress")
                       return <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30"><Play className="h-3 w-3 mr-1" />In Progress</Badge>;
                     return <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">Enrolled</Badge>;
                   };
 
                   return (
-                    <Card key={course.id} className="overflow-hidden cred-hover bg-white/5 backdrop-blur-md border-white/10">
-                      <div className="aspect-video bg-white/5 relative">
-                        {course.thumbnail && (
-                          <img
-                            src={course.thumbnail}
-                            alt={course.title}
-                            className="w-full h-full object-cover"
-                          />
-                        )}
-                      </div>
-                      <div className="p-6">
-                        <div className="flex items-center justify-between mb-2">
-                          <h3 className="font-semibold line-clamp-2 text-white">{course.title}</h3>
+                    <Card key={course.id || course.courseId} className="overflow-hidden bg-white/5 backdrop-blur-md border-white/10 hover:border-white/20 transition-all group flex flex-col">
+                      <Link to={`/courses/${course.id || course.courseId}`} className="block">
+                        <div className="aspect-video bg-gradient-to-br from-white/5 to-white/10 relative overflow-hidden">
+                          {course.thumbnail ? (
+                            <img
+                              src={course.thumbnail}
+                              alt={course.title || 'Course thumbnail'}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = 'none';
+                              }}
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <BookOpen className="h-16 w-16 text-white/20" />
+                            </div>
+                          )}
                         </div>
-                        <div className="flex items-center gap-2 mb-4">
-                          <Avatar className="h-6 w-6">
-                            <AvatarImage src={course.instructor?.avatar} />
-                            <AvatarFallback className="bg-white/10 text-white text-xs">{course.instructor?.name?.[0]}</AvatarFallback>
-                          </Avatar>
-                          <span className="text-sm text-white/60">{course.instructor?.name}</span>
-                        </div>
-                        <div className="mb-4">{getStatusBadge()}</div>
-                        <div className="space-y-2 mb-4">
-                          <div className="flex items-center justify-between text-sm">
-                            <span className="text-white/60">Progress</span>
-                            <span className="font-medium text-white">{course.progress || 0}%</span>
+                      </Link>
+                      <div className="p-6 flex-1 flex flex-col">
+                        <Link to={`/courses/${course.id || course.courseId}`} className="block flex-1">
+                          <div className="flex items-start justify-between mb-3">
+                            <h3 className="font-semibold line-clamp-2 text-white group-hover:text-primary transition-colors flex-1">{course.title || 'Untitled Course'}</h3>
                           </div>
-                          <Progress value={course.progress || 0} className="h-2" />
+                          {course.instructor && (
+                            <div className="flex items-center gap-2 mb-4">
+                              <Avatar className="h-6 w-6 border border-white/10">
+                                <AvatarImage src={course.instructor.avatar} />
+                                <AvatarFallback className="bg-white/10 text-white text-xs">
+                                  {course.instructor.name?.[0]?.toUpperCase() || 'I'}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span className="text-sm text-white/60 truncate">{course.instructor.name || 'Unknown Instructor'}</span>
+                            </div>
+                          )}
+                          <div className="mb-4">{getStatusBadge()}</div>
+                          <div className="space-y-2 mb-4">
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="text-white/60">Progress</span>
+                              <span className="font-medium text-white">{Math.round(course.progress || 0)}%</span>
+                            </div>
+                            <Progress value={course.progress || 0} className="h-2" />
+                          </div>
+                        </Link>
+                        <div className="flex gap-2 mt-auto">
+                          {course.status === "completed" && (
+                            <Link 
+                              to={`/courses/${course.id || course.courseId}/assessment`}
+                              className="flex-1"
+                            >
+                              <Button 
+                                size="sm"
+                                className="w-full bg-green-500 hover:bg-green-600 text-white"
+                              >
+                                Take Assessment
+                              </Button>
+                            </Link>
+                          )}
+                          {(course.status === "inprogress" || !course.status) && (
+                            <Link 
+                              to={`/courses/${course.id || course.courseId}/learn`}
+                              className="flex-1"
+                            >
+                              <Button 
+                                size="sm"
+                                className="w-full bg-primary hover:bg-primary/90 text-white"
+                              >
+                                Continue Learning
+                              </Button>
+                            </Link>
+                          )}
                         </div>
-                        {course.status === "completed" && (
-                          <Link to={`/courses/${course.id}/assessment`} className="mb-2 block">
-                            <Button className="w-full bg-green-500 hover:bg-green-600 text-white">
-                              Take Assessment
-                            </Button>
-                          </Link>
-                        )}
-                        {course.status === "in_progress" || course.status === "enrolled" ? (
-                          <Link to={`/courses/${course.id}/learn`} className="block">
-                            <Button className="w-full border-white/20 text-white hover:bg-white/10" variant="outline">
-                              Continue Learning
-                            </Button>
-                          </Link>
-                        ) : null}
                       </div>
                     </Card>
                   );

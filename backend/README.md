@@ -111,6 +111,8 @@ Required environment variables:
 - `CLOUDINARY_CLOUD_NAME` - Cloudinary cloud name
 - `CLOUDINARY_API_KEY` - Cloudinary API key
 - `CLOUDINARY_API_SECRET` - Cloudinary API secret
+- `YOUTUBE_API_KEY` - YouTube Data API v3 key (required for fetching playlist videos)
+- `ADMIN_EMAIL` - Admin email address for admin panel access (default: `durgesh.singh.sde@gmail.com`)
 - `PORT` - Server port (default: 3000)
 - `NODE_ENV` - Environment (development/production)
 

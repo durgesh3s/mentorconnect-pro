@@ -8,7 +8,7 @@ interface User {
   name: string;
   avatar?: string;
   googleGmailPhoto?: string;
-  role: "student";
+  role: "student" | "admin";
   skills?: string[];
   socialLinks?: Record<string, string>;
   description?: string;

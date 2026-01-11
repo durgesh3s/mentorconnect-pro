@@ -13,10 +13,16 @@ router.get('/student', authenticate, async (req: Request, res: Response): Promis
     }
 
     const student = await Student.findById(req.user._id)
-      .populate('followers', 'username name avatar')
-      .populate('following', 'username name avatar')
-      // Note: Course model not yet implemented, so courseId will be returned as ObjectId
-      // .populate('coursesEnrolledIn.courseId', 'title description')
+      .populate('followers', 'username name avatar googleGmailPhoto')
+      .populate('following', 'username name avatar googleGmailPhoto')
+      .populate({
+        path: 'coursesEnrolledIn.courseId',
+        select: 'title description thumbnail category level instructor createdBy youtubeType youtubeId videos',
+        populate: {
+          path: 'createdBy',
+          select: 'name username avatar googleGmailPhoto'
+        }
+      })
       .select('-__v');
 
     if (!student) {
@@ -30,19 +36,65 @@ router.get('/student', authenticate, async (req: Request, res: Response): Promis
       studentResponse.socialLinks = Object.fromEntries(studentResponse.socialLinks) as Record<string, string>;
     }
 
-    // Format enrolled courses for frontend
-    // Since Course model doesn't exist yet, we'll return the courseId as is
-    const enrolledCourses = studentResponse.coursesEnrolledIn || [];
+    // Get filter parameter from query string
+    const statusFilter = req.query.status as string | undefined;
 
-    res.json({
-      enrolledCourses: enrolledCourses.map((enrollment: any) => ({
-        id: enrollment.courseId,
-        courseId: enrollment.courseId,
-        status: enrollment.status,
+    // Format enrolled courses for frontend with full course details
+    let enrolledCourses = (studentResponse.coursesEnrolledIn || []).map((enrollment: any) => {
+      const course = enrollment.courseId;
+      if (!course) {
+        return null;
+      }
+
+      // Get thumbnail URL (use course thumbnail or YouTube thumbnail)
+      let thumbnail = course.thumbnail;
+      if (!thumbnail) {
+        if (course.youtubeType === 'video' && course.youtubeId) {
+          thumbnail = `https://img.youtube.com/vi/${course.youtubeId}/hqdefault.jpg`;
+        } else if (course.youtubeType === 'playlist' && course.videos && course.videos.length > 0) {
+          thumbnail = `https://img.youtube.com/vi/${course.videos[0].videoId}/hqdefault.jpg`;
+        }
+      }
+
+      return {
+        id: course._id || course.id,
+        courseId: course._id || course.id,
+        title: course.title,
+        description: course.description,
+        thumbnail: thumbnail,
+        category: course.category,
+        level: course.level,
+        instructor: {
+          id: course.createdBy?._id || course.createdBy?.id,
+          name: course.instructor || course.createdBy?.name || 'Unknown',
+          avatar: course.createdBy?.avatar || course.createdBy?.googleGmailPhoto,
+        },
+        status: enrollment.status || 'inprogress',
         progress: enrollment.progress || 0,
         enrolledAt: enrollment.enrolledAt,
         completedAt: enrollment.completedAt,
-      })),
+      };
+    }).filter((course: any) => course !== null);
+
+    // Filter courses by status if filter parameter is provided
+    if (statusFilter && statusFilter !== 'all') {
+      if (statusFilter === 'enrolled') {
+        // "Only Enrolled" shows courses with 'inprogress' status
+        enrolledCourses = enrolledCourses.filter((course: any) => {
+          const status = course.status || 'inprogress';
+          return status === 'inprogress';
+        });
+      } else {
+        // Filter by exact status match (inprogress, completed, failed)
+        enrolledCourses = enrolledCourses.filter((course: any) => {
+          const status = course.status || 'inprogress';
+          return status === statusFilter;
+        });
+      }
+    }
+
+    res.json({
+      enrolledCourses,
       profile: studentResponse,
     });
   } catch (error) {

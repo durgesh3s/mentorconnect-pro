@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { GraduationCap, Menu, X, FileText, User, LogOut } from "lucide-react";
+import { GraduationCap, Menu, X, FileText, User, LogOut, Shield, Search } from "lucide-react";
 import { useState, useEffect } from "react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useAuthStore } from "@/lib/stores/authStore";
@@ -49,20 +49,34 @@ export function Navigation() {
 
           {/* Desktop Navigation - Hidden on mobile */}
           <div className="hidden md:flex items-center gap-8">
-            <Link to="/courses" className="text-sm font-medium text-foreground/80 hover:text-foreground transition-base">
-              Courses
-            </Link>
-            <Link to="/feed" className="text-sm font-medium text-foreground/80 hover:text-foreground transition-base">
-              Community
-            </Link>
-            {isAuthenticated && user?.role === "student" && (
-              <Link to="/letters" className="text-sm font-medium text-foreground/80 hover:text-foreground transition-base">
-                My Letters
+            {isAuthenticated && user?.role === "admin" ? (
+              <Link to="/admin" className="text-sm font-medium text-foreground/80 hover:text-foreground transition-base">
+                Admin Panel
               </Link>
+            ) : (
+              <>
+                <Link to="/courses" className="text-sm font-medium text-foreground/80 hover:text-foreground transition-base">
+                  Courses
+                </Link>
+                <Link to="/feed" className="text-sm font-medium text-foreground/80 hover:text-foreground transition-base">
+                  Community
+                </Link>
+                {isAuthenticated && (
+                  <Link to="/users/search" className="text-sm font-medium text-foreground/80 hover:text-foreground transition-base flex items-center gap-1">
+                    <Search className="h-4 w-4" />
+                    Search
+                  </Link>
+                )}
+                {isAuthenticated && user?.role === "student" && (
+                  <Link to="/letters" className="text-sm font-medium text-foreground/80 hover:text-foreground transition-base">
+                    My Letters
+                  </Link>
+                )}
+                <a href="#how-it-works" className="text-sm font-medium text-foreground/80 hover:text-foreground transition-base">
+                  How It Works
+                </a>
+              </>
             )}
-            <a href="#how-it-works" className="text-sm font-medium text-foreground/80 hover:text-foreground transition-base">
-              How It Works
-            </a>
           </div>
 
           {/* Right Side - CRED Style Button */}
@@ -71,12 +85,21 @@ export function Navigation() {
               <ThemeToggle />
               {isAuthenticated ? (
                 <>
-                  <Link to="/dashboard/student">
-                    <Button variant="ghost" size="sm" className="text-foreground hover:bg-foreground/10">
-                      <User className="h-4 w-4 mr-2" />
-                      Dashboard
-                    </Button>
-                  </Link>
+                  {user?.role === "admin" ? (
+                    <Link to="/admin">
+                      <Button variant="ghost" size="sm" className="text-foreground hover:bg-foreground/10">
+                        <Shield className="h-4 w-4 mr-2" />
+                        Admin Panel
+                      </Button>
+                    </Link>
+                  ) : (
+                    <Link to="/dashboard/student">
+                      <Button variant="ghost" size="sm" className="text-foreground hover:bg-foreground/10">
+                        <User className="h-4 w-4 mr-2" />
+                        Dashboard
+                      </Button>
+                    </Link>
+                  )}
                   <Button 
                     variant="ghost" 
                     size="sm" 
@@ -114,45 +137,76 @@ export function Navigation() {
             <div className="px-4 pb-2">
               <ThemeToggle />
             </div>
-            <Link
-              to="/courses"
-              className="block py-2 text-sm font-medium text-foreground/80 hover:text-foreground transition-base px-4"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Courses
-            </Link>
-            <Link
-              to="/feed"
-              className="block py-2 text-sm font-medium text-foreground/80 hover:text-foreground transition-base px-4"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Community
-            </Link>
-            {isAuthenticated && user?.role === "student" && (
+            {isAuthenticated && user?.role === "admin" ? (
               <Link
-                to="/letters"
+                to="/admin"
                 className="block py-2 text-sm font-medium text-foreground/80 hover:text-foreground transition-base px-4"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                My Letters
+                Admin Panel
               </Link>
+            ) : (
+              <>
+                <Link
+                  to="/courses"
+                  className="block py-2 text-sm font-medium text-foreground/80 hover:text-foreground transition-base px-4"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Courses
+                </Link>
+                <Link
+                  to="/feed"
+                  className="block py-2 text-sm font-medium text-foreground/80 hover:text-foreground transition-base px-4"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Community
+                </Link>
+                {isAuthenticated && (
+                  <Link
+                    to="/users/search"
+                    className="block py-2 text-sm font-medium text-foreground/80 hover:text-foreground transition-base px-4 flex items-center gap-2"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    <Search className="h-4 w-4" />
+                    Search
+                  </Link>
+                )}
+                {isAuthenticated && user?.role === "student" && (
+                  <Link
+                    to="/letters"
+                    className="block py-2 text-sm font-medium text-foreground/80 hover:text-foreground transition-base px-4"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    My Letters
+                  </Link>
+                )}
+                <a
+                  href="#how-it-works"
+                  className="block py-2 text-sm font-medium text-foreground/80 hover:text-foreground transition-base px-4"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  How It Works
+                </a>
+              </>
             )}
-            <a
-              href="#how-it-works"
-              className="block py-2 text-sm font-medium text-foreground/80 hover:text-foreground transition-base px-4"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              How It Works
-            </a>
             <div className="flex flex-col gap-2 pt-4 border-t border-border px-4">
               {isAuthenticated ? (
                 <>
-                  <Link to="/dashboard/student" onClick={() => setMobileMenuOpen(false)}>
-                    <Button variant="outline" className="w-full border-foreground/20 text-foreground hover:bg-foreground/10">
-                      <User className="h-4 w-4 mr-2" />
-                      Dashboard
-                    </Button>
-                  </Link>
+                  {user?.role === "admin" ? (
+                    <Link to="/admin" onClick={() => setMobileMenuOpen(false)}>
+                      <Button variant="outline" className="w-full border-foreground/20 text-foreground hover:bg-foreground/10">
+                        <Shield className="h-4 w-4 mr-2" />
+                        Admin Panel
+                      </Button>
+                    </Link>
+                  ) : (
+                    <Link to="/dashboard/student" onClick={() => setMobileMenuOpen(false)}>
+                      <Button variant="outline" className="w-full border-foreground/20 text-foreground hover:bg-foreground/10">
+                        <User className="h-4 w-4 mr-2" />
+                        Dashboard
+                      </Button>
+                    </Link>
+                  )}
                   <Button 
                     variant="outline" 
                     className="w-full border-foreground/20 text-foreground hover:bg-foreground/10"

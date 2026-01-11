@@ -37,8 +37,10 @@ export default function Callback() {
         // Clear pending role after successful authentication
         setPendingRole(null);
         
-        // Redirect based on profile completion status
-        if (response.user.isProfileComplete) {
+        // Redirect based on user role and profile completion status
+        if (response.user.role === "admin") {
+          navigate("/admin");
+        } else if (response.user.isProfileComplete) {
           navigate("/dashboard/student");
         } else {
           navigate("/auth/complete-profile");
