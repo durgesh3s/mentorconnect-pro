@@ -86,7 +86,7 @@ export default function SelectRole() {
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/10 border border-white/20">
               <GraduationCap className="h-7 w-7 text-white" />
             </div>
-            <span className="text-2xl font-bold text-white">CodeMentor Pro</span>
+            <span className="text-2xl font-bold text-white">Mentorise</span>
           </div>
           <h1 className="text-4xl md:text-5xl font-bold mb-4 text-white">Choose Your Path</h1>
           <p className="text-xl text-white/80">Select your role to get started</p>

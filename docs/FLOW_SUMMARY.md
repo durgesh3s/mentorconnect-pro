@@ -1,4 +1,4 @@
-# MentorConnect Pro - Flow Summary
+# Mentorise - Flow Summary
 
 ## Quick Reference Flow Diagram
 

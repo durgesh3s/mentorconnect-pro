@@ -31,6 +31,8 @@ import StudentManagement from "./pages/admin/StudentManagement";
 import CourseManagement from "./pages/admin/CourseManagement";
 import CreateCourse from "./pages/admin/CreateCourse";
 import EditCourse from "./pages/admin/EditCourse";
+import AssessmentManagement from "./pages/admin/AssessmentManagement";
+import AssessmentSubmissions from "./pages/admin/AssessmentSubmissions";
 import SearchUsers from "./pages/users/SearchUsers";
 import FollowersList from "./pages/users/FollowersList";
 import FollowingList from "./pages/users/FollowingList";
@@ -61,6 +63,8 @@ const App = () => (
             <Route path="/admin/courses" element={<CourseManagement />} />
             <Route path="/admin/courses/create" element={<CreateCourse />} />
             <Route path="/admin/courses/:id/edit" element={<EditCourse />} />
+            <Route path="/admin/assessments" element={<AssessmentManagement />} />
+            <Route path="/admin/assessments/:id/submissions" element={<AssessmentSubmissions />} />
             
             {/* Course Routes */}
             <Route path="/courses" element={<CourseListing />} />

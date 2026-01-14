@@ -2,55 +2,113 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CheckCircle2, XCircle, Clock, AlertCircle } from "lucide-react";
+import { CheckCircle2, XCircle, Clock, AlertCircle, Code, ExternalLink, FileText, Play } from "lucide-react";
 import { apiClient } from "@/lib/api/client";
 import { Navigation } from "@/components/ui/navigation";
+import { toast } from "sonner";
 
-interface Question {
-  id: string;
-  question: string;
-  options: string[];
-  correctAnswer: number;
-  points: number;
+interface CustomField {
+  label: string;
+  type: 'text' | 'textarea' | 'url' | 'number' | 'email';
+  required: boolean;
+  placeholder?: string;
+  validation?: {
+    pattern?: string;
+    min?: number;
+    max?: number;
+  };
+  order: number;
+}
+
+interface Assessment {
+  id?: string;
+  assessmentId?: string;
+  title: string;
+  description?: string;
+  instructions?: string;
+  timeLimit: number;
+  customFields: CustomField[];
+  startedAt?: Date;
+  expiresAt?: Date;
+  timeRemaining?: number;
+  canStart?: boolean;
+  inProgress?: boolean;
 }
 
 export default function CourseAssessment() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [questions, setQuestions] = useState<Question[]>([]);
-  const [answers, setAnswers] = useState<Record<string, number>>({});
-  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [timeRemaining, setTimeRemaining] = useState(3600); // 60 minutes in seconds
+  const [assessment, setAssessment] = useState<Assessment | null>(null);
+  const [timeRemaining, setTimeRemaining] = useState<number>(0);
+  const [started, setStarted] = useState(false);
   const [submitted, setSubmitted] = useState(false);
-  const [score, setScore] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
+  const [starting, setStarting] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+
+  // Project submission form data
+  const [projectData, setProjectData] = useState({
+    title: "",
+    description: "",
+    deployedLink: "",
+    githubLink: "",
+    customFields: {} as Record<string, any>,
+  });
 
   useEffect(() => {
+    if (!id) return;
+
     const fetchAssessment = async () => {
       try {
-        const data = await apiClient.get(`/courses/${id}/assessment`);
-        setQuestions(data.questions || []);
-        setTimeRemaining(data.timeLimit || 3600);
-      } catch (error) {
+        setLoading(true);
+        const data = await apiClient.get<Assessment>(`/assessments/course/${id}`);
+        
+        if (data.inProgress && data.timeRemaining !== undefined) {
+          // Assessment already started
+          setAssessment(data);
+          setStarted(true);
+          setTimeRemaining(data.timeRemaining || 0);
+        } else if (data.canStart) {
+          // Assessment can be started
+          setAssessment(data);
+          setStarted(false);
+        } else {
+          // Already submitted or error
+          if ((data as any).submitted) {
+            toast.error("You have already submitted this assessment");
+            navigate(`/courses/${id}/learn`);
+          }
+        }
+      } catch (error: any) {
         console.error("Failed to fetch assessment", error);
+        if (error.response?.status === 403) {
+          toast.error(error.response.data.message || "You cannot access this assessment");
+          navigate(`/courses/${id}/learn`);
+        } else if (error.response?.status === 404 || error.response?.status === 400) {
+          // Assessment not found or not ready
+          setAssessment(null);
+        } else {
+          toast.error("Failed to load assessment");
+        }
       } finally {
         setLoading(false);
       }
     };
 
     fetchAssessment();
-  }, [id]);
+  }, [id, navigate]);
 
+  // Timer countdown
   useEffect(() => {
-    if (timeRemaining > 0 && !submitted) {
+    if (started && timeRemaining > 0 && !submitted) {
       const timer = setInterval(() => {
         setTimeRemaining((prev) => {
           if (prev <= 1) {
-            handleSubmit();
+            handleTimeExpired();
             return 0;
           }
           return prev - 1;
@@ -58,54 +116,85 @@ export default function CourseAssessment() {
       }, 1000);
       return () => clearInterval(timer);
     }
-  }, [timeRemaining, submitted]);
+  }, [started, timeRemaining, submitted]);
+
+  const handleStartAssessment = async () => {
+    if (!id) return;
+
+    try {
+      setStarting(true);
+      const data = await apiClient.post<Assessment>(`/assessments/course/${id}/start`);
+      setAssessment(data);
+      setStarted(true);
+      
+      if (data.expiresAt) {
+        const now = new Date();
+        const expiresAt = new Date(data.expiresAt);
+        const remaining = Math.max(0, Math.floor((expiresAt.getTime() - now.getTime()) / 1000));
+        setTimeRemaining(remaining);
+      } else {
+        setTimeRemaining(data.timeLimit);
+      }
+
+      toast.success("Assessment started! Timer is running.");
+    } catch (error: any) {
+      console.error("Failed to start assessment", error);
+      toast.error(error.response?.data?.message || "Failed to start assessment");
+    } finally {
+      setStarting(false);
+    }
+  };
+
+  const handleTimeExpired = () => {
+    toast.error("Time has expired! Please submit your assessment immediately.");
+  };
+
+  const handleSubmit = async () => {
+    if (!id) return;
+
+    // Validate required fields
+    if (!projectData.title.trim()) {
+      toast.error("Please enter a project title");
+      return;
+    }
+
+    // Validate custom required fields
+    if (assessment?.customFields) {
+      for (const field of assessment.customFields) {
+        if (field.required && !projectData.customFields[field.label]?.toString().trim()) {
+          toast.error(`Please fill in the required field: ${field.label}`);
+          return;
+        }
+      }
+    }
+
+    try {
+      setSubmitting(true);
+      await apiClient.post(`/assessments/course/${id}/submit`, projectData);
+      setSubmitted(true);
+      toast.success("Assessment submitted successfully!");
+      
+      setTimeout(() => {
+        navigate(`/courses/${id}/learn`);
+      }, 2000);
+    } catch (error: any) {
+      console.error("Failed to submit assessment", error);
+      if (error.response?.data?.expired) {
+        toast.error("Assessment time has expired");
+        navigate(`/courses/${id}/learn`);
+      } else {
+        toast.error(error.response?.data?.message || "Failed to submit assessment");
+      }
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const formatTime = (seconds: number) => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
     return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-  };
-
-  const handleAnswerSelect = (questionId: string, answerIndex: number) => {
-    setAnswers({ ...answers, [questionId]: answerIndex });
-  };
-
-  const handleNext = () => {
-    if (currentQuestionIndex < questions.length - 1) {
-      setCurrentQuestionIndex(currentQuestionIndex + 1);
-    }
-  };
-
-  const handlePrevious = () => {
-    if (currentQuestionIndex > 0) {
-      setCurrentQuestionIndex(currentQuestionIndex - 1);
-    }
-  };
-
-  const handleSubmit = async () => {
-    if (submitted) return;
-
-    try {
-      const response = await apiClient.post(`/courses/${id}/assessment/submit`, { answers });
-      setScore(response.score);
-      setSubmitted(true);
-
-      // Navigate to results or next step based on score
-      if (response.score >= 70) {
-        // Passed - can proceed to interview
-        setTimeout(() => {
-          navigate(`/courses/${id}/assessment/result`, { state: { score: response.score, passed: true } });
-        }, 2000);
-      } else {
-        // Failed
-        setTimeout(() => {
-          navigate(`/courses/${id}/assessment/result`, { state: { score: response.score, passed: false } });
-        }, 2000);
-      }
-    } catch (error) {
-      console.error("Failed to submit assessment", error);
-    }
   };
 
   if (loading) {
@@ -119,158 +208,315 @@ export default function CourseAssessment() {
     );
   }
 
-  if (submitted && score !== null) {
+  if (!assessment) {
     return (
       <div className="min-h-screen bg-black text-white">
         <Navigation />
         <div className="container mx-auto px-4 py-8 max-w-4xl pt-24">
           <Card className="p-8 bg-white/5 backdrop-blur-md border-white/10 text-center">
-            {score >= 70 ? (
-              <>
-                <CheckCircle2 className="h-16 w-16 mx-auto mb-4 text-green-500" />
-                <h2 className="text-3xl font-bold mb-4 text-white">Congratulations!</h2>
-                <p className="text-xl mb-2 text-white">You scored {score}%</p>
-                <p className="text-white/80 mb-6">You have passed the assessment!</p>
-                <Button
-                  onClick={() => navigate(`/interviews/schedule?courseId=${id}`)}
-                  className="bg-green-500 hover:bg-green-600 text-white"
-                >
-                  Schedule Interview
-                </Button>
-              </>
-            ) : (
-              <>
-                <XCircle className="h-16 w-16 mx-auto mb-4 text-red-500" />
-                <h2 className="text-3xl font-bold mb-4 text-white">Assessment Failed</h2>
-                <p className="text-xl mb-2 text-white">You scored {score}%</p>
-                <p className="text-white/80 mb-6">Minimum passing score is 70%</p>
-                <Button
-                  onClick={() => navigate(`/courses/${id}/learn`)}
-                  className="bg-white text-black hover:bg-white/90"
-                >
-                  Review Course
-                </Button>
-              </>
-            )}
+            <AlertCircle className="h-16 w-16 mx-auto mb-4 text-yellow-500" />
+            <h2 className="text-3xl font-bold mb-4 text-white">Assessment Not Ready</h2>
+            <p className="text-xl mb-2 text-white/80">
+              No active assessment found for this course
+            </p>
+            <p className="text-white/60 mb-6">
+              The assessment questions are still being set up. Please check back later.
+            </p>
+            <Button
+              onClick={() => navigate(`/courses/${id}/learn`)}
+              className="bg-white text-black hover:bg-white/90"
+            >
+              Back to Course
+            </Button>
           </Card>
         </div>
       </div>
     );
   }
 
-  const currentQuestion = questions[currentQuestionIndex];
-  const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
+  if (submitted) {
+    return (
+      <div className="min-h-screen bg-black text-white">
+        <Navigation />
+        <div className="container mx-auto px-4 py-8 max-w-4xl pt-24">
+          <Card className="p-8 bg-white/5 backdrop-blur-md border-white/10 text-center">
+            <CheckCircle2 className="h-16 w-16 mx-auto mb-4 text-green-500" />
+            <h2 className="text-3xl font-bold mb-4 text-white">Assessment Submitted!</h2>
+            <p className="text-white/80 mb-6">
+              Your project submission has been received successfully.
+            </p>
+            <Button
+              onClick={() => navigate(`/courses/${id}/learn`)}
+              className="bg-white text-black hover:bg-white/90"
+            >
+              Back to Course
+            </Button>
+          </Card>
+        </div>
+      </div>
+    );
+  }
 
+  // Show start screen if not started
+  if (!started) {
+    return (
+      <div className="min-h-screen bg-black text-white">
+        <Navigation />
+        <div className="container mx-auto px-4 py-8 max-w-4xl pt-24">
+          <Card className="p-8 bg-white/5 backdrop-blur-md border-white/10">
+            <div className="text-center mb-6">
+              <FileText className="h-16 w-16 mx-auto mb-4 text-primary" />
+              <h1 className="text-3xl font-bold mb-2 text-white">{assessment.title}</h1>
+              {assessment.description && (
+                <p className="text-white/70 text-lg mb-4">{assessment.description}</p>
+              )}
+            </div>
+
+            {assessment.instructions && (
+              <div className="mb-6 p-4 bg-white/5 rounded-lg border border-white/10">
+                <h3 className="font-semibold mb-2 text-white">Instructions</h3>
+                <p className="text-white/80 whitespace-pre-wrap">{assessment.instructions}</p>
+              </div>
+            )}
+
+            <div className="mb-6 p-4 bg-white/5 rounded-lg border border-white/10">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <Clock className="h-5 w-5 text-primary" />
+                <span className="font-semibold text-white">Time Limit</span>
+              </div>
+              <p className="text-2xl font-bold text-primary">
+                {formatTime(assessment.timeLimit)}
+              </p>
+              <p className="text-sm text-white/60 mt-2">
+                The timer will start when you click "Start Assessment"
+              </p>
+            </div>
+
+            <Alert className="mb-6 bg-yellow-500/10 border-yellow-500/30">
+              <AlertCircle className="h-4 w-4 text-yellow-400" />
+              <AlertDescription className="text-yellow-400">
+                Once you start, the timer will begin counting down. Make sure you have your project ready to submit.
+              </AlertDescription>
+            </Alert>
+
+            <div className="flex gap-4">
+              <Button
+                variant="outline"
+                onClick={() => navigate(`/courses/${id}/learn`)}
+                className="flex-1 border-white/20 text-white hover:bg-white/10"
+              >
+                Back to Course
+              </Button>
+              <Button
+                onClick={handleStartAssessment}
+                disabled={starting}
+                className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
+              >
+                <Play className="h-4 w-4 mr-2" />
+                {starting ? "Starting..." : "Start Assessment"}
+              </Button>
+            </div>
+          </Card>
+        </div>
+      </div>
+    );
+  }
+
+  // Show submission form
   return (
     <div className="min-h-screen bg-black text-white">
       <Navigation />
       <div className="container mx-auto px-4 py-8 max-w-4xl pt-24">
-        {/* Header */}
+        {/* Header with Timer */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-4">
-            <h1 className="text-2xl font-bold text-white">Course Assessment</h1>
-            <div className="flex items-center gap-2 bg-white/5 px-4 py-2 rounded-lg border border-white/10">
-              <Clock className="h-4 w-4 text-white/80" />
-              <span className="font-mono text-white">{formatTime(timeRemaining)}</span>
+            <h1 className="text-2xl font-bold text-white">{assessment.title}</h1>
+            <div className="flex items-center gap-2 bg-red-500/20 px-4 py-2 rounded-lg border border-red-500/30">
+              <Clock className="h-4 w-4 text-red-400" />
+              <span className="font-mono text-white font-semibold">
+                {formatTime(timeRemaining)}
+              </span>
             </div>
           </div>
-          <Progress value={progress} className="h-2 mb-2" />
-          <p className="text-sm text-white/60">
-            Question {currentQuestionIndex + 1} of {questions.length}
-          </p>
-        </div>
-
-        {/* Question Card */}
-        {currentQuestion && (
-          <Card className="p-6 bg-white/5 backdrop-blur-md border-white/10 mb-6">
-            <div className="mb-4">
-              <h2 className="text-xl font-semibold mb-2 text-white">{currentQuestion.question}</h2>
-              <p className="text-sm text-white/60">Points: {currentQuestion.points}</p>
-            </div>
-
-            <RadioGroup
-              value={answers[currentQuestion.id]?.toString()}
-              onValueChange={(value) => handleAnswerSelect(currentQuestion.id, parseInt(value))}
-            >
-              <div className="space-y-3">
-                {currentQuestion.options.map((option, index) => (
-                  <div
-                    key={index}
-                    className={`flex items-center space-x-2 p-4 rounded-lg border ${
-                      answers[currentQuestion.id] === index
-                        ? "bg-white/10 border-white/30"
-                        : "bg-white/5 border-white/10"
-                    }`}
-                  >
-                    <RadioGroupItem value={index.toString()} id={`option-${index}`} />
-                    <Label
-                      htmlFor={`option-${index}`}
-                      className="flex-1 cursor-pointer text-white"
-                    >
-                      {option}
-                    </Label>
-                  </div>
-                ))}
-              </div>
-            </RadioGroup>
-          </Card>
-        )}
-
-        {/* Navigation */}
-        <div className="flex items-center justify-between">
-          <Button
-            onClick={handlePrevious}
-            disabled={currentQuestionIndex === 0}
-            variant="outline"
-            className="border-white/20 text-white hover:bg-white/10"
-          >
-            Previous
-          </Button>
-
-          <div className="flex gap-2">
-            {questions.map((_, index) => (
-              <button
-                key={index}
-                onClick={() => setCurrentQuestionIndex(index)}
-                className={`h-8 w-8 rounded ${
-                  index === currentQuestionIndex
-                    ? "bg-white text-black"
-                    : answers[questions[index].id] !== undefined
-                    ? "bg-green-500/20 text-green-400 border border-green-500/30"
-                    : "bg-white/5 text-white/60 border border-white/10"
-                }`}
-              >
-                {index + 1}
-              </button>
-            ))}
-          </div>
-
-          {currentQuestionIndex === questions.length - 1 ? (
-            <Button
-              onClick={handleSubmit}
-              className="bg-green-500 hover:bg-green-600 text-white"
-            >
-              Submit Assessment
-            </Button>
-          ) : (
-            <Button
-              onClick={handleNext}
-              className="bg-white text-black hover:bg-white/90"
-            >
-              Next
-            </Button>
+          {timeRemaining <= 300 && timeRemaining > 0 && (
+            <Alert className="bg-red-500/10 border-red-500/30">
+              <AlertCircle className="h-4 w-4 text-red-400" />
+              <AlertDescription className="text-red-400">
+                Warning: Less than 5 minutes remaining!
+              </AlertDescription>
+            </Alert>
           )}
         </div>
 
-        {/* Warning Alert */}
-        <Alert className="mt-6 bg-yellow-500/10 border-yellow-500/30">
-          <AlertCircle className="h-4 w-4 text-yellow-400" />
-          <AlertDescription className="text-yellow-400">
-            Make sure to review all questions before submitting. You cannot change answers after submission.
-          </AlertDescription>
-        </Alert>
+        {/* Submission Form */}
+        <Card className="p-6 bg-white/5 backdrop-blur-md border-white/10 mb-6">
+          <h2 className="text-xl font-semibold mb-6 text-white">Project Submission</h2>
+
+          <div className="space-y-6">
+            {/* Project Title */}
+            <div>
+              <Label htmlFor="projectTitle" className="text-white">
+                Project Title *
+              </Label>
+              <Input
+                id="projectTitle"
+                value={projectData.title}
+                onChange={(e) =>
+                  setProjectData({ ...projectData, title: e.target.value })
+                }
+                placeholder="e.g., E-commerce Website"
+                className="bg-white/5 border-white/20 text-white mt-2"
+                required
+              />
+            </div>
+
+            {/* Project Description */}
+            <div>
+              <Label htmlFor="projectDescription" className="text-white">
+                Project Description / Design *
+              </Label>
+              <Textarea
+                id="projectDescription"
+                value={projectData.description}
+                onChange={(e) =>
+                  setProjectData({ ...projectData, description: e.target.value })
+                }
+                placeholder="Describe your project, technologies used, features implemented, design decisions..."
+                rows={8}
+                className="bg-white/5 border-white/20 text-white mt-2"
+                required
+              />
+            </div>
+
+            {/* Deployed Link */}
+            <div>
+              <Label htmlFor="deployedLink" className="text-white flex items-center gap-2">
+                <ExternalLink className="h-4 w-4" />
+                Deployed Link (Vercel, Render, Netlify, etc.)
+              </Label>
+              <Input
+                id="deployedLink"
+                type="url"
+                value={projectData.deployedLink}
+                onChange={(e) =>
+                  setProjectData({ ...projectData, deployedLink: e.target.value })
+                }
+                placeholder="https://your-project.vercel.app"
+                className="bg-white/5 border-white/20 text-white mt-2"
+              />
+              <p className="text-xs text-white/60 mt-1">
+                Enter the URL where your project is deployed
+              </p>
+            </div>
+
+            {/* GitHub Link */}
+            <div>
+              <Label htmlFor="githubLink" className="text-white flex items-center gap-2">
+                <Code className="h-4 w-4" />
+                GitHub Repository Link
+              </Label>
+              <Input
+                id="githubLink"
+                type="url"
+                value={projectData.githubLink}
+                onChange={(e) =>
+                  setProjectData({ ...projectData, githubLink: e.target.value })
+                }
+                placeholder="https://github.com/username/repository"
+                className="bg-white/5 border-white/20 text-white mt-2"
+              />
+              <p className="text-xs text-white/60 mt-1">
+                Enter the URL to your GitHub repository
+              </p>
+            </div>
+
+            {/* Custom Fields */}
+            {assessment.customFields && assessment.customFields.length > 0 && (
+              <div className="border-t border-white/10 pt-6">
+                <h3 className="text-lg font-semibold mb-4 text-white">Additional Information</h3>
+                <div className="space-y-4">
+                  {assessment.customFields
+                    .sort((a, b) => a.order - b.order)
+                    .map((field) => (
+                      <div key={field.label}>
+                        <Label htmlFor={`custom-${field.label}`} className="text-white">
+                          {field.label}
+                          {field.required && <span className="text-red-400 ml-1">*</span>}
+                        </Label>
+                        {field.type === 'textarea' ? (
+                          <Textarea
+                            id={`custom-${field.label}`}
+                            value={projectData.customFields[field.label] || ""}
+                            onChange={(e) =>
+                              setProjectData({
+                                ...projectData,
+                                customFields: {
+                                  ...projectData.customFields,
+                                  [field.label]: e.target.value,
+                                },
+                              })
+                            }
+                            placeholder={field.placeholder || ""}
+                            className="bg-white/5 border-white/20 text-white mt-2"
+                            required={field.required}
+                            rows={4}
+                          />
+                        ) : (
+                          <Input
+                            id={`custom-${field.label}`}
+                            type={field.type === 'url' ? 'url' : field.type === 'email' ? 'email' : field.type === 'number' ? 'number' : 'text'}
+                            value={projectData.customFields[field.label] || ""}
+                            onChange={(e) =>
+                              setProjectData({
+                                ...projectData,
+                                customFields: {
+                                  ...projectData.customFields,
+                                  [field.label]: e.target.value,
+                                },
+                              })
+                            }
+                            placeholder={field.placeholder || ""}
+                            className="bg-white/5 border-white/20 text-white mt-2"
+                            required={field.required}
+                            min={field.validation?.min}
+                            max={field.validation?.max}
+                          />
+                        )}
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </Card>
+
+        {/* Submit Button */}
+        <div className="flex gap-4">
+          <Button
+            variant="outline"
+            onClick={() => navigate(`/courses/${id}/learn`)}
+            className="border-white/20 text-white hover:bg-white/10"
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            disabled={submitting || timeRemaining <= 0}
+            className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90"
+          >
+            {submitting ? "Submitting..." : "Submit Assessment"}
+          </Button>
+        </div>
+
+        {timeRemaining <= 0 && (
+          <Alert className="mt-4 bg-red-500/10 border-red-500/30">
+            <AlertCircle className="h-4 w-4 text-red-400" />
+            <AlertDescription className="text-red-400">
+              Time has expired! Please submit immediately.
+            </AlertDescription>
+          </Alert>
+        )}
       </div>
     </div>
   );
 }
-

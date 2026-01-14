@@ -1,6 +1,28 @@
 import mongoose, { Schema, Model } from 'mongoose';
 import { ICourse, IVideoContent, IResource, CourseLevel, YouTubeType, ResourceType } from '../types/index.js';
 
+const resourceSchema = new Schema<IResource>({
+  type: {
+    type: String,
+    enum: ['pdf', 'link', 'code', 'other'] as ResourceType[],
+    required: true,
+  },
+  title: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  url: {
+    type: String,
+    required: true,
+    trim: true,
+  },
+  description: {
+    type: String,
+    trim: true,
+  },
+});
+
 const videoContentSchema = new Schema<IVideoContent>({
   videoId: {
     type: String,
@@ -28,28 +50,7 @@ const videoContentSchema = new Schema<IVideoContent>({
   thumbnail: {
     type: String,
   },
-});
-
-const resourceSchema = new Schema<IResource>({
-  type: {
-    type: String,
-    enum: ['pdf', 'link', 'code', 'other'] as ResourceType[],
-    required: true,
-  },
-  title: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  url: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  description: {
-    type: String,
-    trim: true,
-  },
+  resources: [resourceSchema],
 });
 
 const courseSchema = new Schema<ICourse>(
@@ -152,7 +153,7 @@ const courseSchema = new Schema<ICourse>(
       type: String,
       required: true,
       trim: true,
-      default: 'CodeMentor Pro',
+      default: 'Mentorise',
     },
     language: {
       type: String,
@@ -202,7 +203,9 @@ const courseSchema = new Schema<ICourse>(
 );
 
 // Indexes for better query performance
-courseSchema.index({ title: 'text', description: 'text', tags: 'text' });
+// Explicitly set language to 'none' to prevent MongoDB from using the document's language field
+// as a language override (which doesn't support all language codes like 'hi')
+courseSchema.index({ title: 'text', description: 'text', tags: 'text' }, { default_language: 'none' });
 courseSchema.index({ category: 1 });
 courseSchema.index({ level: 1 });
 courseSchema.index({ isPublished: 1 });

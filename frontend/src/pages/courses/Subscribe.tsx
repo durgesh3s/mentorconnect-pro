@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Check, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
 import { Navigation } from "@/components/ui/navigation";
-import { cn } from "@/lib/utils";
+import { cn, formatPrice, calculateSubscriptionPrices } from "@/lib/utils";
 
 type PlanType = "monthly" | "quarterly" | "annual";
 
@@ -51,11 +51,9 @@ export default function Subscribe() {
             avatar: courseData.createdBy?.avatar || courseData.createdBy?.googleGmailPhoto,
           },
           thumbnail: courseData.thumbnail || courseData.thumbnailUrl,
-          price: {
-            monthly: courseData.isFree ? 0 : (courseData.price || 0),
-            quarterly: courseData.isFree ? 0 : (courseData.price ? courseData.price * 3 : 0),
-            annual: courseData.isFree ? 0 : (courseData.price ? courseData.price * 12 : 0),
-          },
+          price: courseData.isFree 
+            ? { monthly: 0, quarterly: 0, annual: 0 }
+            : calculateSubscriptionPrices(courseData.price || 0),
           category: courseData.category,
           difficulty: courseData.level || courseData.difficulty,
           rating: courseData.averageRating || 0,
@@ -125,10 +123,10 @@ export default function Subscribe() {
       const options = {
         key: razorpayKey,
         amount: paymentData.amount, // Amount is already in paise
-        currency: "INR",
-        name: "CodeMentor Pro",
+        currency: paymentData.currency || "INR",
+        name: "Mentorise",
         description: `Subscription for ${currentCourse.title}`,
-        order_id: paymentData.orderId,
+        order_id: paymentData.orderId, // Razorpay order ID from backend
         handler: async (response: any) => {
           try {
             // Verify payment with backend
@@ -297,7 +295,7 @@ export default function Subscribe() {
                 <div className="text-center mb-6">
                   <h3 className="text-xl font-semibold mb-2">{plan.name}</h3>
                   <div className="mb-2">
-                    <span className="text-4xl font-bold">₹{plan.price}</span>
+                    <span className="text-4xl font-bold">₹{formatPrice(plan.price)}</span>
                     <span className="text-muted-foreground">/{plan.period}</span>
                   </div>
                   {plan.savings > 0 && (

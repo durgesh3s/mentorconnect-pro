@@ -43,7 +43,7 @@ export default function CreateCourse() {
     isFree: true,
     price: "",
     currency: "INR",
-    instructor: "CodeMentor Pro",
+    instructor: "Mentorise",
     language: "en",
     isPublished: false,
     isFeatured: false,
@@ -353,7 +353,7 @@ export default function CreateCourse() {
                     name="instructor"
                     value={formData.instructor}
                     onChange={handleInputChange}
-                    placeholder="CodeMentor Pro"
+                    placeholder="Mentorise"
                   />
                 </div>
                 <div className="space-y-2">

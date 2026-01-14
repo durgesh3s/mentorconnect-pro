@@ -1,6 +1,6 @@
-# MentorConnect Backend API
+# Mentorise Backend API
 
-Backend API for MentorConnect Pro platform built with TypeScript.
+Backend API for Mentorise platform built with TypeScript.
 
 ## Features
 

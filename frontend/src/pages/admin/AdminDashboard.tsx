@@ -15,6 +15,7 @@ import {
   Shield,
   Database,
   Activity,
+  FileText,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
@@ -251,7 +252,7 @@ export default function AdminDashboard() {
             <CardDescription>Common administrative tasks</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <Link to="/admin/students">
                 <Button variant="outline" className="w-full justify-start" size="lg">
                   <Users className="h-5 w-5 mr-2" />
@@ -262,6 +263,12 @@ export default function AdminDashboard() {
                 <Button variant="outline" className="w-full justify-start" size="lg">
                   <Database className="h-5 w-5 mr-2" />
                   Course Management
+                </Button>
+              </Link>
+              <Link to="/admin/assessments">
+                <Button variant="outline" className="w-full justify-start" size="lg">
+                  <FileText className="h-5 w-5 mr-2" />
+                  Assessment Management
                 </Button>
               </Link>
               <Button variant="outline" className="w-full justify-start" size="lg" disabled>

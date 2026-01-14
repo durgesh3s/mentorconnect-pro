@@ -11,6 +11,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Search, Grid, List, Filter } from "lucide-react";
 import { Navigation } from "@/components/ui/navigation";
+import { formatPrice, calculateSubscriptionPrices } from "@/lib/utils";
 
 export default function CourseListing() {
   const { courses, setCourses } = useCourseStore();
@@ -43,11 +44,9 @@ export default function CourseListing() {
             avatar: course.createdBy?.avatar || course.createdBy?.googleGmailPhoto,
           },
           thumbnail: course.thumbnail || course.thumbnailUrl,
-          price: {
-            monthly: course.isFree ? 0 : (course.price || 0),
-            quarterly: course.isFree ? 0 : (course.price ? course.price * 3 : 0),
-            annual: course.isFree ? 0 : (course.price ? course.price * 12 : 0),
-          },
+          price: course.isFree 
+            ? { monthly: 0, quarterly: 0, annual: 0 }
+            : calculateSubscriptionPrices(course.price || 0),
           category: course.category,
           difficulty: course.level || course.difficulty,
           rating: course.averageRating || 0,
@@ -215,7 +214,7 @@ export default function CourseListing() {
                     </div>
                     <div className="flex items-center justify-between">
                       <div>
-                        <span className="text-lg font-bold text-white">₹{course.price.monthly}/mo</span>
+                        <span className="text-lg font-bold text-white">₹{formatPrice(course.price.monthly)}/mo</span>
                         <span className="text-sm text-white/60 ml-2">
                           {course.rating} ⭐ ({course.reviewCount})
                         </span>
@@ -271,7 +270,7 @@ export default function CourseListing() {
                           </span>
                         </div>
                         <div className="text-right">
-                          <p className="text-xl font-bold text-white">₹{course.price.monthly}/mo</p>
+                          <p className="text-xl font-bold text-white">₹{formatPrice(course.price.monthly)}/mo</p>
                         </div>
                       </div>
                     </div>

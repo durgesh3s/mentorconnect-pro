@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { useProfileStore } from "@/lib/stores/profileStore";
 import { apiClient } from "@/lib/api/client";
 import { Card } from "@/components/ui/card";
@@ -40,6 +40,7 @@ interface Comment {
 
 export default function Feed() {
   const { threads, setThreads, updateThread } = useProfileStore();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [filter, setFilter] = useState<"all" | "following">("all");
   const [loading, setLoading] = useState(true);
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null);
@@ -229,6 +230,45 @@ export default function Feed() {
       setSubmittingComment(false);
     }
   };
+
+  // Clear URL parameter when dialog closes
+  const handleDialogClose = (open: boolean) => {
+    if (!open) {
+      setSelectedThreadId(null);
+      // Remove thread parameter from URL
+      const newSearchParams = new URLSearchParams(searchParams);
+      newSearchParams.delete("thread");
+      setSearchParams(newSearchParams, { replace: true });
+    }
+  };
+
+  // Handle thread query parameter - open comments dialog if thread ID is in URL
+  useEffect(() => {
+    const threadIdFromUrl = searchParams.get("thread");
+    if (threadIdFromUrl && threads.length > 0 && !selectedThreadId) {
+      // Check if the thread exists in the loaded threads
+      const threadExists = threads.some((t) => t.id === threadIdFromUrl);
+      if (threadExists) {
+        const openThreadComments = async () => {
+          setSelectedThreadId(threadIdFromUrl);
+          setCommentContent("");
+          setLoadingComments(true);
+          
+          try {
+            const data = await apiClient.get<Comment[]>(`/threads/${threadIdFromUrl}/comments`);
+            setComments(data);
+          } catch (error) {
+            console.error("Failed to fetch comments", error);
+            toast.error("Failed to load comments");
+          } finally {
+            setLoadingComments(false);
+          }
+        };
+        openThreadComments();
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, threads]);
 
   return (
     <div className="min-h-screen bg-black text-white page-transition">
@@ -454,7 +494,7 @@ export default function Feed() {
       )}
 
       {/* Comments Dialog */}
-      <Dialog open={selectedThreadId !== null} onOpenChange={(open) => !open && setSelectedThreadId(null)}>
+      <Dialog open={selectedThreadId !== null} onOpenChange={handleDialogClose}>
         <DialogContent className="max-w-2xl max-h-[80vh] bg-black border-white/10 text-white">
           <DialogHeader>
             <DialogTitle className="text-xl">Comments</DialogTitle>

@@ -116,6 +116,7 @@ export interface IVideoContent {
   duration: number; // in seconds
   order: number;
   thumbnail?: string;
+  resources?: IResource[];
 }
 
 export interface IResource {

@@ -9,9 +9,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Lock, CheckCircle2, Play, BookOpen, MessageSquare, Bookmark, Menu, X } from "lucide-react";
+import { Lock, CheckCircle2, Play, BookOpen, MessageSquare, Bookmark, Menu, X, ExternalLink, FileText, Code, Link as LinkIcon, Download, Save, Send, Loader2 } from "lucide-react";
 import { Navigation } from "@/components/ui/navigation";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { CourseCompletionCelebration } from "@/components/CourseCompletionCelebration";
 
 export default function CoursePlayer() {
   const { id } = useParams<{ id: string }>();
@@ -24,6 +26,17 @@ export default function CoursePlayer() {
   const isMobile = useIsMobile();
   const [showLeftSidebar, setShowLeftSidebar] = useState(false);
   const [showRightSidebar, setShowRightSidebar] = useState(false);
+  const [resources, setResources] = useState<any[]>([]);
+  const [questions, setQuestions] = useState<any[]>([]);
+  const [questionText, setQuestionText] = useState("");
+  const [submittingQuestion, setSubmittingQuestion] = useState(false);
+  const [answerTexts, setAnswerTexts] = useState<Record<string, string>>({});
+  const [submittingAnswers, setSubmittingAnswers] = useState<Record<string, boolean>>({});
+  const [loadingResources, setLoadingResources] = useState(false);
+  const [loadingQuestions, setLoadingQuestions] = useState(false);
+  const [savingNotes, setSavingNotes] = useState(false);
+  const [activeTab, setActiveTab] = useState("notes");
+  const [showCelebration, setShowCelebration] = useState(false);
   
   // Initialize sidebar state based on mobile status
   useEffect(() => {
@@ -64,7 +77,8 @@ export default function CoursePlayer() {
           console.log('[CoursePlayer] Setting first video as selected:', course.videos[0]);
           const firstVideo = course.videos[0];
           setSelectedLesson(firstVideo);
-          // Load notes for first video
+          setCompleted(firstVideo.completed || false);
+          // Load notes and resources for first video
           if (firstVideo.videoId) {
             try {
               const notesResponse = await apiClient.get(`/courses/${id}/videos/${firstVideo.videoId}/notes`);
@@ -73,13 +87,23 @@ export default function CoursePlayer() {
               console.warn('[CoursePlayer] Failed to load notes for first video:', error);
               setNotes(firstVideo.notes || "");
             }
+            try {
+              const resourcesResponse = await apiClient.get(`/courses/${id}/videos/${firstVideo.videoId}/resources`);
+              setResources(resourcesResponse.resources || firstVideo.resources || []);
+            } catch (error) {
+              console.warn('[CoursePlayer] Failed to load resources for first video:', error);
+              setResources(firstVideo.resources || []);
+            }
           } else {
             setNotes(firstVideo.notes || "");
+            setResources(firstVideo.resources || []);
           }
         } else if (course.modules?.[0]?.lessons?.[0]) {
           // Fallback to modules/lessons structure if videos not available
           console.log('[CoursePlayer] No videos found, using modules/lessons fallback');
-          setSelectedLesson(course.modules[0].lessons[0]);
+          const firstLesson = course.modules[0].lessons[0];
+          setSelectedLesson(firstLesson);
+          setCompleted(firstLesson.completed || false);
         } else {
           console.warn('[CoursePlayer] No videos or lessons found in course');
         }
@@ -167,9 +191,24 @@ export default function CoursePlayer() {
         // Use notes from lesson object if available, otherwise empty
         setNotes(lesson.notes || "");
       }
+      
+      // Load resources for this video
+      setLoadingResources(true);
+      try {
+        console.log('[CoursePlayer] Loading resources for video:', videoId);
+        const resourcesResponse = await apiClient.get(`/courses/${id}/videos/${videoId}/resources`);
+        console.log('[CoursePlayer] Resources loaded:', resourcesResponse);
+        setResources(resourcesResponse.resources || []);
+      } catch (error) {
+        console.warn('[CoursePlayer] Failed to load resources (might not exist yet):', error);
+        setResources(lesson.resources || []);
+      } finally {
+        setLoadingResources(false);
+      }
     } else {
       // Use notes from lesson object if available
     setNotes(lesson.notes || "");
+      setResources(lesson.resources || []);
     }
   };
 
@@ -255,12 +294,7 @@ export default function CoursePlayer() {
       // Check if course is completed
       if (response.courseCompleted) {
         console.log('[CoursePlayer] Course completed!');
-        // Show success message
-        setTimeout(() => {
-          if (confirm('Congratulations! You completed the course. Would you like to view the assessment?')) {
-          window.location.href = `/courses/${id}/assessment`;
-          }
-        }, 1000);
+        setShowCelebration(true);
       }
     } catch (error) {
       console.error("[CoursePlayer] ❌ Failed to mark lesson as complete", error);
@@ -545,16 +579,27 @@ export default function CoursePlayer() {
                         Notes
                       </Button>
                     )}
-                    <div className="flex items-center gap-2 px-3 md:px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 transition-colors cursor-pointer">
+                    <div className={`flex items-center gap-2 px-3 md:px-4 py-2 rounded-lg transition-colors ${
+                      completed 
+                        ? 'bg-white/5 cursor-default' 
+                        : 'bg-white/5 hover:bg-white/10 cursor-pointer'
+                    }`}>
                       <Checkbox
                         checked={completed}
+                        disabled={completed}
                         onCheckedChange={(checked) => {
-                          setCompleted(checked as boolean);
-                          if (checked) handleComplete();
+                          // Only allow checking, not unchecking
+                          if (checked && !completed) {
+                            handleComplete();
+                          }
                         }}
-                        className="data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                        className="data-[state=checked]:bg-primary data-[state=checked]:border-primary disabled:cursor-not-allowed"
                       />
-                      <label className="text-sm font-medium cursor-pointer whitespace-nowrap">Mark as complete</label>
+                      <label className={`text-sm font-medium whitespace-nowrap ${
+                        completed ? 'cursor-default text-muted-foreground' : 'cursor-pointer'
+                      }`}>
+                        {completed ? 'Completed' : 'Mark as complete'}
+                      </label>
                     </div>
                   </div>
                 </div>
@@ -588,46 +633,59 @@ export default function CoursePlayer() {
               </Button>
             </div>
           )}
-          <Tabs defaultValue="notes" className="flex flex-col h-full">
-            <TabsList className="mx-4 mt-4 bg-white/5 rounded-lg p-1">
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full">
+            <TabsList className="mx-4 mt-4 mb-0 bg-white/5 border border-white/10 rounded-lg p-1">
               <TabsTrigger 
                 value="notes" 
-                className="data-[state=active]:bg-primary data-[state=active]:text-white transition-all duration-200"
+                className="text-white data-[state=active]:bg-white data-[state=active]:text-black transition-all duration-200"
               >
                 Notes
               </TabsTrigger>
               <TabsTrigger 
                 value="resources"
-                className="data-[state=active]:bg-primary data-[state=active]:text-white transition-all duration-200"
+                className="text-white data-[state=active]:bg-white data-[state=active]:text-black transition-all duration-200"
               >
                 Resources
               </TabsTrigger>
               <TabsTrigger 
                 value="discussion"
-                className="data-[state=active]:bg-primary data-[state=active]:text-white transition-all duration-200"
+                className="text-white data-[state=active]:bg-white data-[state=active]:text-black transition-all duration-200"
               >
                 Q&A
               </TabsTrigger>
             </TabsList>
 
-            <TabsContent value="notes" className="flex-1 overflow-hidden flex flex-col m-4 mt-2">
-              <div className="mb-3">
+            {activeTab === "notes" && (
+            <div className="flex-1 overflow-hidden flex flex-col mx-4 mb-4 mt-4">
+              <div className="mb-4">
                 <h4 className="text-sm font-semibold text-white mb-1">Your Notes</h4>
                 <p className="text-xs text-muted-foreground">
-                  {selectedLesson ? `Taking notes for: ${selectedLesson.title?.substring(0, 30)}...` : 'Select a video to take notes'}
+                  {selectedLesson ? `Taking notes for: ${selectedLesson.title?.substring(0, 40)}...` : 'Select a video to take notes'}
                 </p>
               </div>
+              {!selectedLesson ? (
+                <Card className="flex-1 flex items-center justify-center p-12 bg-white/5 backdrop-blur-md border-white/10">
+                  <div className="text-center">
+                    <BookOpen className="h-12 w-12 mx-auto mb-4 text-white/30" />
+                    <h3 className="text-sm font-semibold mb-2 text-white/80">No video selected</h3>
+                    <p className="text-xs text-muted-foreground">Select a video from the playlist to start taking notes</p>
+                  </div>
+                </Card>
+              ) : (
+                <>
               <ScrollArea className="flex-1 mb-4">
+                    <div className="pr-2">
                 <Textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Take notes here...&#10;&#10;Your notes are automatically saved per video. You can write key points, code snippets, or anything you find useful!"
-                  className="min-h-[400px] resize-none bg-white/5 border-white/10 focus:border-primary/50 focus:ring-primary/20 text-sm leading-relaxed"
+                        className="min-h-[400px] w-full resize-none bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:border-primary/50 focus:ring-primary/20 text-sm leading-relaxed"
                   disabled={!selectedLesson}
                 />
+                    </div>
               </ScrollArea>
               <Button 
-                className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-white font-semibold shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed" 
+                    className="w-full !bg-gradient-to-r !from-primary !to-primary/80 hover:!from-primary/90 hover:!to-primary/70 text-black font-semibold shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed h-10" 
                 onClick={async () => {
                   if (!selectedLesson || !id) {
                     console.warn('[CoursePlayer] Cannot save notes: missing lesson or course ID');
@@ -639,84 +697,347 @@ export default function CoursePlayer() {
                     alert('Error: Video ID is missing. Cannot save notes.');
                     return;
                   }
+                      setSavingNotes(true);
                   try {
                     console.log('[CoursePlayer] Saving notes for video:', videoId);
                     await apiClient.post(`/courses/${id}/videos/${videoId}/notes`, { notes });
                     console.log('[CoursePlayer] Notes saved successfully');
-                    // Show success feedback
-                    const button = document.activeElement as HTMLElement;
-                    if (button) {
-                      const originalText = button.textContent;
-                      button.textContent = '✓ Saved!';
-                      button.className += ' bg-green-500 hover:bg-green-600';
-                      setTimeout(() => {
-                        if (button) {
-                          button.textContent = originalText;
-                          button.className = button.className.replace(' bg-green-500 hover:bg-green-600', '');
-                        }
-                      }, 2000);
-                    }
                   } catch (error) {
                     console.error('[CoursePlayer] Failed to save notes:', error);
                     alert('Failed to save notes. Please try again.');
-                  }
-                }}
-                disabled={!selectedLesson}
-              >
-                💾 Save Notes
+                      } finally {
+                        setSavingNotes(false);
+                      }
+                    }}
+                    disabled={!selectedLesson || savingNotes}
+                  >
+                    {savingNotes ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Save className="h-4 w-4 mr-2" />
+                        Save Notes
+                      </>
+                    )}
               </Button>
-            </TabsContent>
+                </>
+              )}
+            </div>
+            )}
 
-            <TabsContent value="resources" className="flex-1 overflow-hidden m-4">
-              <ScrollArea>
-                <div className="space-y-2">
-                  <Card className="p-4">
-                    <div className="flex items-center gap-3">
-                      <Bookmark className="h-5 w-5 text-primary" />
+            {activeTab === "resources" && (
+            <div className="flex-1 overflow-hidden flex flex-col mx-4 mb-4 mt-4">
+              <div className="mb-4">
+                <h4 className="text-sm font-semibold text-white mb-1">Video Resources</h4>
+                <p className="text-xs text-muted-foreground">
+                  {selectedLesson ? `Resources for: ${selectedLesson.title?.substring(0, 40)}...` : 'Select a video to view resources'}
+                </p>
+              </div>
+              {!selectedLesson ? (
+                <Card className="flex-1 flex items-center justify-center p-12 bg-white/5 backdrop-blur-md border-white/10">
+                  <div className="text-center">
+                    <Bookmark className="h-12 w-12 mx-auto mb-4 text-white/30" />
+                    <h3 className="text-sm font-semibold mb-2 text-white/80">No video selected</h3>
+                    <p className="text-xs text-muted-foreground">Select a video from the playlist to view resources</p>
+                  </div>
+                </Card>
+              ) : loadingResources ? (
+                <Card className="flex-1 flex items-center justify-center p-12 bg-white/5 backdrop-blur-md border-white/10">
+                  <div className="text-center">
+                    <Loader2 className="h-8 w-8 mx-auto mb-4 animate-spin text-primary" />
+                    <p className="text-sm text-muted-foreground">Loading resources...</p>
+                  </div>
+                </Card>
+              ) : (
+                <ScrollArea className="flex-1 -mx-2 px-2">
+                  <div className="space-y-3 pr-2">
+                    {resources.length > 0 ? (
+                      resources.map((resource, index) => {
+                        const getIcon = () => {
+                          switch (resource.type) {
+                            case 'pdf':
+                              return <FileText className="h-5 w-5 text-red-400" />;
+                            case 'code':
+                              return <Code className="h-5 w-5 text-blue-400" />;
+                            case 'link':
+                              return <LinkIcon className="h-5 w-5 text-green-400" />;
+                            default:
+                              return <Bookmark className="h-5 w-5 text-primary" />;
+                          }
+                        };
+                        
+                        const getTypeBadge = () => {
+                          switch (resource.type) {
+                            case 'pdf':
+                              return <span className="text-xs px-2 py-0.5 rounded-full bg-red-500/20 text-red-400 border border-red-500/30 font-medium">PDF</span>;
+                            case 'code':
+                              return <span className="text-xs px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-400 border border-blue-500/30 font-medium">CODE</span>;
+                            case 'link':
+                              return <span className="text-xs px-2 py-0.5 rounded-full bg-green-500/20 text-green-400 border border-green-500/30 font-medium">LINK</span>;
+                            default:
+                              return <span className="text-xs px-2 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30 font-medium">OTHER</span>;
+                          }
+                        };
+                        
+                        return (
+                          <Card key={index} className="p-4 bg-white/5 backdrop-blur-sm border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-200">
+                            <div className="flex items-start gap-3">
+                              <div className="flex-shrink-0 mt-0.5 p-2 rounded-lg bg-white/5">
+                                {getIcon()}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-start justify-between gap-2 mb-2">
+                                  <p className="font-semibold text-white text-sm leading-tight">{resource.title}</p>
+                                  {getTypeBadge()}
+                                </div>
+                                {resource.description && (
+                                  <p className="text-sm text-muted-foreground mb-3 leading-relaxed">{resource.description}</p>
+                                )}
+                                <a
+                                  href={resource.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
+                                >
+                                  {resource.type === 'pdf' ? (
+                                    <>
+                                      <Download className="h-4 w-4" />
+                                      Download PDF
+                                    </>
+                                  ) : (
+                                    <>
+                                      <ExternalLink className="h-4 w-4" />
+                                      Open Link
+                                    </>
+                                  )}
+                                </a>
+                              </div>
+                            </div>
+                          </Card>
+                        );
+                      })
+                    ) : (
+                      <Card className="p-12 bg-white/5 backdrop-blur-md border-white/10 border-dashed">
+                        <div className="flex flex-col items-center justify-center text-center gap-4">
+                          <div className="h-16 w-16 rounded-full bg-white/5 flex items-center justify-center">
+                            <Bookmark className="h-8 w-8 text-white/30" />
+                          </div>
                       <div>
-                        <p className="font-medium">Course Resources</p>
-                        <p className="text-sm text-muted-foreground">Download materials</p>
+                            <h3 className="text-sm font-semibold mb-2 text-white">No resources available</h3>
+                            <p className="text-xs text-muted-foreground max-w-xs">Resources will appear here when added by the instructor for this video</p>
                       </div>
                     </div>
                   </Card>
+                    )}
                 </div>
               </ScrollArea>
-            </TabsContent>
+              )}
+            </div>
+            )}
 
-            <TabsContent value="discussion" className="flex-1 overflow-hidden m-4">
-              <ScrollArea>
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Textarea placeholder="Ask a question..." className="min-h-[100px]" />
-                    <Button className="w-full gradient-bg">Post Question</Button>
+            {activeTab === "discussion" && (
+            <div className="flex-1 overflow-hidden flex flex-col mx-4 mb-4 mt-4">
+              <div className="mb-4">
+                <h4 className="text-sm font-semibold text-white mb-1">Course Q&A</h4>
+                <p className="text-xs text-muted-foreground">Ask questions and get help from the community</p>
                   </div>
+              {loadingQuestions ? (
+                <Card className="flex-1 flex items-center justify-center p-12 bg-white/5 backdrop-blur-md border-white/10">
+                  <div className="text-center">
+                    <Loader2 className="h-8 w-8 mx-auto mb-4 animate-spin text-primary" />
+                    <p className="text-sm text-muted-foreground">Loading questions...</p>
+                  </div>
+                </Card>
+              ) : (
+                <ScrollArea className="flex-1 -mx-2 px-2">
+                  <div className="space-y-4 pr-2">
+                    <Card className="p-4 bg-white/5 backdrop-blur-sm border-white/10">
+                      <div className="space-y-3">
+                        <Textarea 
+                          placeholder="Ask a question about this course..." 
+                          className="min-h-[100px] w-full bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:border-primary/50 focus:ring-primary/20 resize-none"
+                          value={questionText}
+                          onChange={(e) => setQuestionText(e.target.value)}
+                        />
+                        <Button 
+                          className="w-full bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-black font-semibold shadow-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed h-10"
+                          onClick={async () => {
+                            if (!questionText.trim() || !id) return;
+                            setSubmittingQuestion(true);
+                            try {
+                              const response = await apiClient.post(`/courses/${id}/questions`, { question: questionText });
+                              setQuestions([response.question, ...questions]);
+                              setQuestionText("");
+                            } catch (error) {
+                              console.error('[CoursePlayer] Failed to post question:', error);
+                              alert('Failed to post question. Please try again.');
+                            } finally {
+                              setSubmittingQuestion(false);
+                            }
+                          }}
+                          disabled={submittingQuestion || !questionText.trim()}
+                        >
+                          {submittingQuestion ? (
+                            <>
+                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                              Posting...
+                            </>
+                          ) : (
+                            <>
+                              <Send className="h-4 w-4 mr-2" />
+                              Post Question
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                    </Card>
+                    
                   <div className="space-y-4">
-                    {[1, 2, 3].map((i) => (
-                      <Card key={i} className="p-4">
+                      {questions.length > 0 ? (
+                        questions.map((question) => (
+                        <Card key={question._id || question.id} className="p-4 bg-white/5 backdrop-blur-sm border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-200">
+                          <div className="space-y-4">
                         <div className="flex items-start gap-3">
-                          <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center">
-                            <span className="text-xs font-medium">U{i}</span>
+                              <Avatar className="h-9 w-9 border-2 border-white/10 flex-shrink-0">
+                                <AvatarImage src={question.author?.avatar || question.author?.googleGmailPhoto} />
+                                <AvatarFallback className="bg-primary/20 text-primary text-xs font-semibold">
+                                  {question.author?.name?.[0] || question.author?.username?.[0] || 'U'}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <p className="font-semibold text-sm text-white">
+                                    {question.author?.name || question.author?.username || 'Student'}
+                                  </p>
+                                  <span className="text-xs text-muted-foreground">•</span>
+                                  <span className="text-xs text-muted-foreground">{new Date(question.createdAt).toLocaleDateString()}</span>
                           </div>
-                          <div className="flex-1">
-                            <p className="font-medium mb-1">Student {i}</p>
-                            <p className="text-sm text-muted-foreground mb-2">
-                              How do I implement this pattern?
-                            </p>
-                            <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                              <button>Reply</button>
-                              <span>2 replies</span>
+                                <p className="text-sm text-white/90 mb-3 leading-relaxed whitespace-pre-wrap">
+                                  {question.question}
+                                </p>
+                                <div className="flex items-center gap-3 text-xs">
+                                  <span className="text-muted-foreground font-medium">{question.answers?.length || 0} {question.answers?.length === 1 ? 'answer' : 'answers'}</span>
                             </div>
                           </div>
                         </div>
+                            
+                            {/* Answers */}
+                            {question.answers && question.answers.length > 0 && (
+                              <div className="ml-12 space-y-3 border-l-2 border-white/10 pl-4">
+                                {question.answers.map((answer: any) => (
+                                  <div key={answer._id || answer.id} className="space-y-2 pb-2 border-b border-white/5 last:border-0 last:pb-0">
+                                    <div className="flex items-start gap-2">
+                                      <Avatar className="h-7 w-7 border border-white/10">
+                                        <AvatarImage src={answer.author?.avatar || answer.author?.googleGmailPhoto} />
+                                        <AvatarFallback className="bg-primary/20 text-primary text-[10px] font-semibold">
+                                          {answer.author?.name?.[0] || answer.author?.username?.[0] || 'U'}
+                                        </AvatarFallback>
+                                      </Avatar>
+                                      <div className="flex-1 min-w-0">
+                                        <div className="flex items-center gap-2 mb-1">
+                                          <p className="text-xs font-semibold text-white">
+                                            {answer.author?.name || answer.author?.username || 'Student'}
+                                          </p>
+                                          {answer.isMentorAnswer && (
+                                            <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30 font-medium">Mentor</span>
+                                          )}
+                                          <span className="text-xs text-muted-foreground">•</span>
+                                          <span className="text-xs text-muted-foreground">{new Date(answer.createdAt).toLocaleDateString()}</span>
+                                        </div>
+                                        <p className="text-sm text-white/80 leading-relaxed whitespace-pre-wrap">{answer.answer}</p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            
+                            {/* Answer Input */}
+                            <div className="ml-12 space-y-2 pt-3 border-t border-white/5">
+                              <Textarea
+                                placeholder="Write an answer..."
+                                className="min-h-[80px] w-full bg-white/5 border-white/10 text-white placeholder:text-white/40 text-sm focus:border-primary/50 focus:ring-primary/20 resize-none"
+                                value={answerTexts[question._id || question.id] || ""}
+                                onChange={(e) => setAnswerTexts({ ...answerTexts, [question._id || question.id]: e.target.value })}
+                              />
+                              <Button
+                                size="sm"
+                                className="bg-gradient-to-r from-primary/80 to-primary/70 hover:from-primary hover:to-primary/90 text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed h-9"
+                                onClick={async () => {
+                                  const answerText = answerTexts[question._id || question.id];
+                                  if (!answerText?.trim() || !id) return;
+                                  setSubmittingAnswers({ ...submittingAnswers, [question._id || question.id]: true });
+                                  try {
+                                    const response = await apiClient.post(
+                                      `/courses/${id}/questions/${question._id || question.id}/answers`,
+                                      { answer: answerText }
+                                    );
+                                    // Update questions list
+                                    setQuestions(questions.map(q => 
+                                      q._id === question._id || q.id === question.id
+                                        ? { ...q, answers: [...(q.answers || []), response.answer] }
+                                        : q
+                                    ));
+                                    setAnswerTexts({ ...answerTexts, [question._id || question.id]: "" });
+                                  } catch (error) {
+                                    console.error('[CoursePlayer] Failed to post answer:', error);
+                                    alert('Failed to post answer. Please try again.');
+                                  } finally {
+                                    setSubmittingAnswers({ ...submittingAnswers, [question._id || question.id]: false });
+                                  }
+                                }}
+                                disabled={submittingAnswers[question._id || question.id] || !answerTexts[question._id || question.id]?.trim()}
+                              >
+                                {submittingAnswers[question._id || question.id] ? (
+                                  <>
+                                    <Loader2 className="h-3 w-3 mr-2 animate-spin" />
+                                    Posting...
+                                  </>
+                                ) : (
+                                  <>
+                                    <Send className="h-3 w-3 mr-2" />
+                                    Post Answer
+                                  </>
+                                )}
+                              </Button>
+                            </div>
+                          </div>
+                        </Card>
+                      ))
+                    ) : (
+                      <Card className="p-8 bg-white/5 border-white/10 border-dashed">
+                        <div className="flex flex-col items-center justify-center text-center gap-3">
+                          <div className="h-12 w-12 rounded-full bg-white/5 flex items-center justify-center">
+                            <MessageSquare className="h-6 w-6 text-muted-foreground" />
+                          </div>
+                          <div>
+                            <p className="font-medium text-white mb-1">No questions yet</p>
+                            <p className="text-sm text-muted-foreground">Be the first to ask a question about this course</p>
+                          </div>
+                        </div>
                       </Card>
-                    ))}
+                    )}
                   </div>
                 </div>
               </ScrollArea>
-            </TabsContent>
+              )}
+            </div>
+            )}
           </Tabs>
         </div>
       </div>
+      
+      {/* Course Completion Celebration */}
+      {showCelebration && (
+        <CourseCompletionCelebration
+          courseId={id || ""}
+          courseTitle={currentCourse?.title}
+          onClose={() => setShowCelebration(false)}
+        />
+      )}
     </div>
   );
 }

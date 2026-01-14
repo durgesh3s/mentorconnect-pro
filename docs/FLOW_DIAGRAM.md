@@ -1,7 +1,7 @@
-# MentorConnect Pro - Complete Flow Diagram
+# Mentorise - Complete Flow Diagram
 
 ## Overview
-This document provides a comprehensive flow diagram of the MentorConnect Pro platform, showing all user journeys, system interactions, and data flows.
+This document provides a comprehensive flow diagram of the Mentorise platform, showing all user journeys, system interactions, and data flows.
 
 ---
 

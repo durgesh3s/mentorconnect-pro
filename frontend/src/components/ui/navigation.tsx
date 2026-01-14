@@ -44,7 +44,7 @@ export function Navigation() {
             <div className="flex h-10 w-10 items-center justify-center">
               <GraduationCap className="h-8 w-8 text-foreground" />
             </div>
-            <span className="text-xl font-bold text-foreground">CodeMentor Pro</span>
+            <span className="text-xl font-bold text-foreground">Mentorise</span>
           </Link>
 
           {/* Desktop Navigation - Hidden on mobile */}

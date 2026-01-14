@@ -58,6 +58,7 @@ import adminRoutes from './routes/admin.js';
 import uploadRoutes from './routes/upload.js';
 import dashboardRoutes from './routes/dashboard.js';
 import courseRoutes from './routes/courses.js';
+import assessmentRoutes from './routes/assessments.js';
 import feedRoutes from './routes/feed.js';
 import threadRoutes from './routes/threads.js';
 
@@ -74,7 +75,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Health check
 app.get('/health', (_req: Request, res: Response): void => {
-  res.json({ status: 'ok', message: 'MentorConnect API is running' });
+  res.json({ status: 'ok', message: 'Mentorise API is running' });
 });
 
 // API Routes
@@ -84,6 +85,7 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/courses', courseRoutes);
+app.use('/api/assessments', assessmentRoutes);
 app.use('/api/feed', feedRoutes);
 app.use('/api/threads', threadRoutes);
 

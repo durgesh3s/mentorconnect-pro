@@ -3,9 +3,12 @@ import mongoose from 'mongoose';
 import { Course } from '../models/Course.js';
 import { Student } from '../models/Student.js';
 import Review from '../models/Review.js';
+import { Question, Answer } from '../models/Question.js';
 import { authenticate, isAdmin } from '../middleware/auth.js';
+import { validateCourseAccess } from '../middleware/courseAccess.js';
 import { parseYouTubeUrl, getYouTubeThumbnailUrl } from '../utils/youtubeParser.js';
 import { fetchYouTubePlaylistVideos, fetchYouTubeVideoDetails } from '../utils/youtubeFetcher.js';
+import { createRazorpayOrder, verifyRazorpaySignature } from '../utils/razorpay.js';
 import { CourseLevel, YouTubeType, SubscriptionPlan } from '../types/index.js';
 
 const router = express.Router();
@@ -176,7 +179,7 @@ router.post(
         isFree = true,
         price,
         currency = 'INR',
-        instructor = 'CodeMentor Pro',
+        instructor = 'Mentorise',
         language = 'en',
         isPublished = false,
         isFeatured = false,
@@ -203,6 +206,13 @@ router.post(
         return;
       }
 
+      // Validate language code (ISO 639-1 format, 2 characters)
+      const normalizedLanguage = language.toLowerCase().trim();
+      if (normalizedLanguage.length !== 2 || !/^[a-z]{2}$/.test(normalizedLanguage)) {
+        res.status(400).json({ message: 'Language must be a valid 2-letter ISO 639-1 code (e.g., en, hi, es, fr)' });
+        return;
+      }
+
       // Parse YouTube URL
       const youtubeParse = parseYouTubeUrl(youtubeUrl);
       if (!youtubeParse.isValid) {
@@ -226,7 +236,7 @@ router.post(
         price: isFree ? undefined : price,
         currency,
         instructor: instructor.trim(),
-        language: language.toLowerCase(),
+        language: normalizedLanguage,
         isPublished,
         isFeatured,
         resources,
@@ -344,6 +354,17 @@ router.patch(
           res.status(400).json({ message: 'Description must be between 10 and 5000 characters' });
           return;
         }
+      }
+
+      // Validate language code if provided
+      if (req.body.language !== undefined) {
+        const normalizedLanguage = req.body.language.toLowerCase().trim();
+        if (normalizedLanguage.length !== 2 || !/^[a-z]{2}$/.test(normalizedLanguage)) {
+          res.status(400).json({ message: 'Language must be a valid 2-letter ISO 639-1 code (e.g., en, hi, es, fr)' });
+          return;
+        }
+        // Update the language in the request body to the normalized version
+        req.body.language = normalizedLanguage;
       }
 
       const allowedUpdates: (keyof UpdateCourseRequestBody)[] = [
@@ -1264,22 +1285,73 @@ router.post('/:id/subscribe', authenticate, async (req: Request<{ id: string }, 
       return;
     }
 
-    // For paid courses, return payment details for Razorpay/Stripe
-    // In production, you would create an order here and return orderId
-    // For now, we'll return the amount and a mock orderId
-    const orderId = `order_${Date.now()}_${course._id.toString().slice(-6)}`;
+    // For paid courses, create Razorpay order
+    let amountInPaise = Math.round(amount * 100); // Convert to paise
+    
+    // Validate amount
+    if (amountInPaise <= 0) {
+      res.status(400).json({ 
+        message: 'Invalid amount for paid course',
+        error: `Amount must be greater than 0. Calculated amount: ${amountInPaise} paise (${amount} ${currency})`
+      });
+      return;
+    }
+    
+    // Razorpay minimum is 1 INR = 100 paise
+    // Round up to minimum if below threshold
+    const MINIMUM_PAISE = 100;
+    if (amountInPaise < MINIMUM_PAISE) {
+      console.warn(`[Course Subscribe] Amount ${amountInPaise} paise (${amount} ${currency}) is below Razorpay minimum. Rounding up to ${MINIMUM_PAISE} paise (1 ${currency})`);
+      amountInPaise = MINIMUM_PAISE;
+    }
+    
+    try {
+      // Generate a receipt ID that fits Razorpay's 40 character limit
+      // Format: rcpt_<last12charsOfCourseId>_<last8digitsOfTimestamp>
+      const courseIdStr = course._id.toString();
+      const timestamp = Date.now().toString();
+      const receipt = `rcpt_${courseIdStr.slice(-12)}_${timestamp.slice(-8)}`; // ~23 characters
+      
+      const razorpayOrder = await createRazorpayOrder(
+        amountInPaise,
+        currency,
+        receipt,
+        {
+          courseId: course._id.toString(),
+          courseTitle: course.title,
+          plan: plan,
+          userId: req.user!._id.toString(),
+        }
+      );
 
-    res.json({
-      message: 'Payment initialization',
-      orderId,
-      amount: amount * 100, // Convert to paise for Razorpay
-      currency,
-      plan,
-      course: {
-        id: course._id,
-        title: course.title,
-      },
-    });
+      res.json({
+        message: 'Payment initialization',
+        orderId: razorpayOrder.id,
+        amount: amountInPaise,
+        currency,
+        plan,
+        course: {
+          id: course._id,
+          title: course.title,
+        },
+      });
+    } catch (error) {
+      console.error('Razorpay order creation error in subscribe route:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      
+      // Check if it's a credentials error
+      const isCredentialsError = errorMessage.includes('credentials not configured') || 
+                                  errorMessage.includes('RAZORPAY_KEY');
+      
+      res.status(500).json({ 
+        message: 'Failed to create payment order', 
+        error: errorMessage,
+        hint: isCredentialsError 
+          ? 'Please ensure RAZORPAY_KEY_ID and RAZORPAY_KEY_SECRET are set in environment variables'
+          : 'Please check your Razorpay configuration and try again'
+      });
+      return;
+    }
   } catch (error) {
     console.error('Subscribe course error:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -1318,16 +1390,13 @@ router.post('/:id/verify-payment', authenticate, async (
       return;
     }
 
-    // TODO: Verify Razorpay signature in production
-    // const crypto = require('crypto');
-    // const expectedSignature = crypto
-    //   .createHmac('sha256', process.env.RAZORPAY_SECRET)
-    //   .update(orderId + '|' + paymentId)
-    //   .digest('hex');
-    // if (expectedSignature !== signature) {
-    //   res.status(400).json({ message: 'Invalid payment signature' });
-    //   return;
-    // }
+    // Verify Razorpay signature
+    const isValidSignature = verifyRazorpaySignature(orderId, paymentId, signature);
+    if (!isValidSignature) {
+      console.error('Invalid Razorpay signature:', { orderId, paymentId });
+      res.status(400).json({ message: 'Invalid payment signature' });
+      return;
+    }
 
     // Calculate subscription details
     const basePrice = course.isFree ? 0 : (course.price || 0);
@@ -1634,10 +1703,138 @@ router.get(
   }
 );
 
+// Get resources for a video (Student & Admin)
+router.get(
+  '/:id/videos/:videoId/resources',
+  authenticate,
+  async (req: Request, res: Response): Promise<void> => {
+    const courseId = req.params.id;
+    const videoId = req.params.videoId;
+
+    console.log(`[Course Routes] Get resources request:`, {
+      courseId,
+      videoId,
+      userId: req.user?._id
+    });
+
+    try {
+      const course = await Course.findById(courseId);
+      if (!course) {
+        res.status(404).json({ message: 'Course not found' });
+        return;
+      }
+
+      // Find the video
+      const video = course.videos?.find((v) => v.videoId === videoId);
+      if (!video) {
+        res.status(404).json({ message: 'Video not found' });
+        return;
+      }
+
+      // Check if user is enrolled (for students) or is admin
+      if (req.user?.role !== 'admin') {
+        const student = await Student.findById(req.user!._id);
+        if (!student) {
+          res.status(404).json({ message: 'Student not found' });
+          return;
+        }
+
+        const enrollment = student.coursesEnrolledIn.find(
+          (e) => e.courseId.toString() === courseId
+        );
+
+        if (!enrollment) {
+          res.status(403).json({ message: 'You must be enrolled in this course to view resources' });
+          return;
+        }
+      }
+
+      res.json({
+        resources: video.resources || [],
+      });
+    } catch (error) {
+      console.error('[Course Routes] ❌ Failed to get resources:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      res.status(500).json({ message: 'Failed to get resources', error: errorMessage });
+    }
+  }
+);
+
+// Update resources for a video (Admin only)
+router.put(
+  '/admin/:id/videos/:videoId/resources',
+  authenticate,
+  isAdmin,
+  async (req: Request, res: Response): Promise<void> => {
+    const courseId = req.params.id;
+    const videoId = req.params.videoId;
+    const { resources } = req.body;
+
+    console.log(`[Course Routes] Update resources request:`, {
+      courseId,
+      videoId,
+      userId: req.user?._id,
+      resourcesCount: resources?.length || 0
+    });
+
+    try {
+      if (!Array.isArray(resources)) {
+        res.status(400).json({ message: 'Resources must be an array' });
+        return;
+      }
+
+      // Validate resources
+      for (const resource of resources) {
+        if (!resource.type || !resource.title || !resource.url) {
+          res.status(400).json({ message: 'Each resource must have type, title, and url' });
+          return;
+        }
+        if (!['pdf', 'link', 'code', 'other'].includes(resource.type)) {
+          res.status(400).json({ message: 'Resource type must be pdf, link, code, or other' });
+          return;
+        }
+      }
+
+      const course = await Course.findById(courseId);
+      if (!course) {
+        res.status(404).json({ message: 'Course not found' });
+        return;
+      }
+
+      // Find the video
+      const videoIndex = course.videos?.findIndex((v) => v.videoId === videoId);
+      if (videoIndex === -1 || videoIndex === undefined) {
+        res.status(404).json({ message: 'Video not found' });
+        return;
+      }
+
+      // Update resources
+      if (!course.videos) {
+        res.status(404).json({ message: 'Course videos not found' });
+        return;
+      }
+
+      course.videos[videoIndex].resources = resources;
+      course.lastModifiedBy = req.user!._id;
+      await course.save();
+
+      res.json({
+        message: 'Resources updated successfully',
+        resources: course.videos[videoIndex].resources,
+      });
+    } catch (error) {
+      console.error('[Course Routes] ❌ Failed to update resources:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      res.status(500).json({ message: 'Failed to update resources', error: errorMessage });
+    }
+  }
+);
+
 // Mark video as complete (Student)
 router.post(
   '/:id/videos/:videoId/complete',
   authenticate,
+  validateCourseAccess,
   async (req: Request, res: Response): Promise<void> => {
     const courseId = req.params.id;
     const videoId = req.params.videoId;
@@ -1661,7 +1858,7 @@ router.post(
         return;
       }
 
-      // Check if student is enrolled
+      // Check if student is enrolled (already validated by middleware, but double-check for safety)
       const enrollment = student.coursesEnrolledIn.find(
         (e) => e.courseId.toString() === courseId
       );
@@ -1804,6 +2001,220 @@ router.post(
       console.error('[Course Routes] ❌ Failed to mark video as complete:', error);
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       res.status(500).json({ message: 'Failed to mark video as complete', error: errorMessage });
+    }
+  }
+);
+
+// ==================== Q&A ROUTES ====================
+
+// Get all questions for a course (Student & Admin)
+router.get(
+  '/:id/questions',
+  authenticate,
+  async (req: Request, res: Response): Promise<void> => {
+    const courseId = req.params.id;
+
+    console.log(`[Course Routes] Get questions request:`, {
+      courseId,
+      userId: req.user?._id
+    });
+
+    try {
+      const course = await Course.findById(courseId);
+      if (!course) {
+        res.status(404).json({ message: 'Course not found' });
+        return;
+      }
+
+      // Check if user is enrolled (for students) or is admin
+      if (req.user?.role !== 'admin') {
+        const student = await Student.findById(req.user!._id);
+        if (!student) {
+          res.status(404).json({ message: 'Student not found' });
+          return;
+        }
+
+        const enrollment = student.coursesEnrolledIn.find(
+          (e) => e.courseId.toString() === courseId
+        );
+
+        if (!enrollment) {
+          res.status(403).json({ message: 'You must be enrolled in this course to view questions' });
+          return;
+        }
+      }
+
+      const questions = await Question.find({ courseId })
+        .populate('author', 'name username avatar googleGmailPhoto')
+        .populate({
+          path: 'answers',
+          populate: {
+            path: 'author',
+            select: 'name username avatar googleGmailPhoto role',
+          },
+        })
+        .sort({ createdAt: -1 })
+        .lean();
+
+      res.json({ questions });
+    } catch (error) {
+      console.error('[Course Routes] ❌ Failed to get questions:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      res.status(500).json({ message: 'Failed to get questions', error: errorMessage });
+    }
+  }
+);
+
+// Post a question (Student)
+router.post(
+  '/:id/questions',
+  authenticate,
+  async (req: Request, res: Response): Promise<void> => {
+    const courseId = req.params.id;
+    const { question } = req.body;
+
+    console.log(`[Course Routes] Post question request:`, {
+      courseId,
+      userId: req.user?._id,
+      questionLength: question?.length || 0
+    });
+
+    try {
+      if (!question || typeof question !== 'string' || question.trim().length === 0) {
+        res.status(400).json({ message: 'Question is required' });
+        return;
+      }
+
+      if (question.trim().length > 1000) {
+        res.status(400).json({ message: 'Question cannot exceed 1000 characters' });
+        return;
+      }
+
+      const course = await Course.findById(courseId);
+      if (!course) {
+        res.status(404).json({ message: 'Course not found' });
+        return;
+      }
+
+      const student = await Student.findById(req.user!._id);
+      if (!student) {
+        res.status(404).json({ message: 'Student not found' });
+        return;
+      }
+
+      // Check if student is enrolled
+      const enrollment = student.coursesEnrolledIn.find(
+        (e) => e.courseId.toString() === courseId
+      );
+
+      if (!enrollment && req.user?.role !== 'admin') {
+        res.status(403).json({ message: 'You must be enrolled in this course to post questions' });
+        return;
+      }
+
+      const newQuestion = new Question({
+        courseId,
+        author: req.user!._id,
+        question: question.trim(),
+        answers: [],
+      });
+
+      await newQuestion.save();
+      await newQuestion.populate('author', 'name username avatar googleGmailPhoto');
+
+      res.status(201).json({ question: newQuestion });
+    } catch (error) {
+      console.error('[Course Routes] ❌ Failed to post question:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      res.status(500).json({ message: 'Failed to post question', error: errorMessage });
+    }
+  }
+);
+
+// Post an answer to a question (Student & Mentor/Admin)
+router.post(
+  '/:id/questions/:questionId/answers',
+  authenticate,
+  async (req: Request, res: Response): Promise<void> => {
+    const courseId = req.params.id;
+    const questionId = req.params.questionId;
+    const { answer } = req.body;
+
+    console.log(`[Course Routes] Post answer request:`, {
+      courseId,
+      questionId,
+      userId: req.user?._id,
+      answerLength: answer?.length || 0
+    });
+
+    try {
+      if (!answer || typeof answer !== 'string' || answer.trim().length === 0) {
+        res.status(400).json({ message: 'Answer is required' });
+        return;
+      }
+
+      if (answer.trim().length > 5000) {
+        res.status(400).json({ message: 'Answer cannot exceed 5000 characters' });
+        return;
+      }
+
+      const course = await Course.findById(courseId);
+      if (!course) {
+        res.status(404).json({ message: 'Course not found' });
+        return;
+      }
+
+      const question = await Question.findById(questionId);
+      if (!question) {
+        res.status(404).json({ message: 'Question not found' });
+        return;
+      }
+
+      if (question.courseId.toString() !== courseId) {
+        res.status(400).json({ message: 'Question does not belong to this course' });
+        return;
+      }
+
+      // Check if user is enrolled (for students) or is admin/mentor
+      const isAdminOrMentor = req.user?.role === 'admin' || course.createdBy.toString() === req.user!._id.toString();
+      
+      if (!isAdminOrMentor) {
+        const student = await Student.findById(req.user!._id);
+        if (!student) {
+          res.status(404).json({ message: 'Student not found' });
+          return;
+        }
+
+        const enrollment = student.coursesEnrolledIn.find(
+          (e) => e.courseId.toString() === courseId
+        );
+
+        if (!enrollment) {
+          res.status(403).json({ message: 'You must be enrolled in this course to post answers' });
+          return;
+        }
+      }
+
+      const newAnswer = new Answer({
+        questionId,
+        author: req.user!._id,
+        answer: answer.trim(),
+        isMentorAnswer: isAdminOrMentor,
+      });
+
+      await newAnswer.save();
+
+      // Add answer to question
+      question.answers.push(newAnswer._id);
+      await question.save();
+
+      await newAnswer.populate('author', 'name username avatar googleGmailPhoto role');
+
+      res.status(201).json({ answer: newAnswer });
+    } catch (error) {
+      console.error('[Course Routes] ❌ Failed to post answer:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      res.status(500).json({ message: 'Failed to post answer', error: errorMessage });
     }
   }
 );

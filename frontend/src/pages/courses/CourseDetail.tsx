@@ -22,6 +22,7 @@ import {
   BookOpen,
 } from "lucide-react";
 import { Navigation } from "@/components/ui/navigation";
+import { formatPrice, calculateSubscriptionPrices } from "@/lib/utils";
 
 interface Review {
   _id: string;
@@ -79,11 +80,9 @@ export default function CourseDetail() {
             avatar: courseData.createdBy?.avatar || courseData.createdBy?.googleGmailPhoto,
           },
           thumbnail: courseData.thumbnail || courseData.thumbnailUrl,
-          price: {
-            monthly: courseData.isFree ? 0 : (courseData.price || 0),
-            quarterly: courseData.isFree ? 0 : (courseData.price ? courseData.price * 3 : 0),
-            annual: courseData.isFree ? 0 : (courseData.price ? courseData.price * 12 : 0),
-          },
+          price: courseData.isFree 
+            ? { monthly: 0, quarterly: 0, annual: 0 }
+            : calculateSubscriptionPrices(courseData.price || 0),
           category: courseData.category,
           difficulty: courseData.level || courseData.difficulty,
           rating: courseData.averageRating || 0,
@@ -195,11 +194,9 @@ export default function CourseDetail() {
           avatar: courseData.createdBy?.avatar || courseData.createdBy?.googleGmailPhoto,
         },
         thumbnail: courseData.thumbnail || courseData.thumbnailUrl,
-        price: {
-          monthly: courseData.isFree ? 0 : (courseData.price || 0),
-          quarterly: courseData.isFree ? 0 : (courseData.price ? courseData.price * 3 : 0),
-          annual: courseData.isFree ? 0 : (courseData.price ? courseData.price * 12 : 0),
-        },
+        price: courseData.isFree 
+          ? { monthly: 0, quarterly: 0, annual: 0 }
+          : calculateSubscriptionPrices(courseData.price || 0),
         category: courseData.category,
         difficulty: courseData.level || courseData.difficulty,
         rating: courseData.averageRating || 0,
@@ -368,11 +365,11 @@ export default function CourseDetail() {
                 <div className="space-y-4">
                   <div>
                     <p className="text-2xl font-bold mb-2 text-white">
-                      ₹{currentCourse.price?.monthly || 0}/month
+                      ₹{formatPrice(currentCourse.price?.monthly || 0)}/month
                     </p>
                     {currentCourse.price?.quarterly && (
                       <p className="text-sm text-white/60">
-                        Or ₹{currentCourse.price.quarterly}/quarter (Save 10%)
+                        Or ₹{formatPrice(currentCourse.price.quarterly)}/quarter (Save 10%)
                       </p>
                     )}
                   </div>

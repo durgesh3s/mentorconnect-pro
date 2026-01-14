@@ -27,7 +27,7 @@ export default function PaymentFailure() {
               Try Again
             </Button>
             <Button variant="outline" size="lg" className="border-white/20 text-white hover:bg-white/10" asChild>
-              <a href="mailto:support@codementorpro.com">
+              <a href="mailto:support@mentorise.in">
                 <Mail className="h-4 w-4 mr-2" />
                 Contact Support
               </a>

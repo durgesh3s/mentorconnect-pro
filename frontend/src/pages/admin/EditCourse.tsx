@@ -45,7 +45,7 @@ export default function EditCourse() {
     isFree: true,
     price: "",
     currency: "INR",
-    instructor: "CodeMentor Pro",
+    instructor: "Mentorise",
     language: "en",
     isPublished: false,
     isFeatured: false,
@@ -72,7 +72,7 @@ export default function EditCourse() {
           isFree: course.isFree ?? true,
           price: course.price?.toString() || "",
           currency: course.currency || "INR",
-          instructor: course.instructor || "CodeMentor Pro",
+          instructor: course.instructor || "Mentorise",
           language: course.language || "en",
           isPublished: course.isPublished ?? false,
           isFeatured: course.isFeatured ?? false,
@@ -408,7 +408,7 @@ export default function EditCourse() {
                     name="instructor"
                     value={formData.instructor}
                     onChange={handleInputChange}
-                    placeholder="CodeMentor Pro"
+                    placeholder="Mentorise"
                   />
                 </div>
                 <div className="space-y-2">
