@@ -259,7 +259,7 @@ export default function Subscribe() {
   }, [plans, selectedPlan]);
 
   return (
-    <div className="min-h-screen bg-black text-white page-transition">
+    <div className="min-h-screen bg-background text-foreground page-transition">
       <Navigation />
 
       <div className="container mx-auto px-4 py-8 max-w-5xl pt-24">
@@ -279,7 +279,7 @@ export default function Subscribe() {
                   "hover:scale-105 hover:shadow-lg",
                   isSelected 
                     ? "border-2 border-primary bg-primary/5 shadow-lg scale-105" 
-                    : "border border-white/10 bg-white/5",
+                    : "border border-border bg-card/50",
                   plan.popular && !isSelected && "border-primary/50"
                 )}
                 onClick={() => handlePlanSelect(plan.id)}

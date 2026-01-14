@@ -1,7 +1,10 @@
 import express, { Request, Response } from 'express';
 import { body, validationResult } from 'express-validator';
 import mongoose from 'mongoose';
+import crypto from 'crypto';
 import { Student } from '../models/Student.js';
+import { Course } from '../models/Course.js';
+import Thread from '../models/Thread.js';
 import { authenticate } from '../middleware/auth.js';
 import { EducationLevel } from '../types/index.js';
 
@@ -138,29 +141,19 @@ router.get('/search', async (req: Request, res: Response): Promise<void> => {
     const limitNum = parseInt(limit as string, 10);
     const skip = (pageNum - 1) * limitNum;
 
-    // If query is empty, return empty results
-    if (!searchQuery.trim()) {
-      res.json({
-        students: [],
-        pagination: {
-          page: pageNum,
-          limit: limitNum,
-          total: 0,
-          pages: 0,
-        },
-      });
-      return;
+    // If query is empty, return all students with pagination
+    let searchFilter: any = {};
+    if (searchQuery.trim()) {
+      // Search by username, name, or email (case-insensitive)
+      const searchRegex = new RegExp(searchQuery.trim(), 'i');
+      searchFilter = {
+        $or: [
+          { username: searchRegex },
+          { name: searchRegex },
+          { email: searchRegex },
+        ],
+      };
     }
-
-    // Search by username, name, or email (case-insensitive)
-    const searchRegex = new RegExp(searchQuery.trim(), 'i');
-    const searchFilter = {
-      $or: [
-        { username: searchRegex },
-        { name: searchRegex },
-        { email: searchRegex },
-      ],
-    };
 
     const [students, total] = await Promise.all([
       Student.find(searchFilter)
@@ -375,31 +368,225 @@ router.post('/follow/:studentId', authenticate, async (req: Request, res: Respon
   }
 });
 
+// Helper function for optional authentication
+const getOptionalUser = async (req: Request): Promise<mongoose.Types.ObjectId | undefined> => {
+  try {
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    if (!token) return undefined;
+
+    const { verifyToken } = await import('../utils/jwt.js');
+    const decoded = verifyToken(token);
+    if (decoded?.id) {
+      return new mongoose.Types.ObjectId(decoded.id);
+    }
+  } catch {
+    // Not authenticated or invalid token, return undefined
+  }
+  return undefined;
+};
+
 // Get student by username
 router.get('/:username', async (req: Request, res: Response): Promise<void> => {
   try {
-    const student = await Student.findOne({ username: req.params.username })
-      .populate('followers', 'username name avatar')
-      .populate('following', 'username name avatar')
-      // Note: Course model not yet implemented, so courseId will be returned as ObjectId
-      // .populate('coursesEnrolledIn.courseId', 'title description')
-      .select('-__v -email -phone');
+    const { username } = req.params;
+    
+    // Get current user ID if authenticated (optional)
+    const currentUserId = await getOptionalUser(req);
+
+    // Find student with optimized query
+    const student = await Student.findOne({ username })
+      .select('-__v -email -phone -googleId')
+      .lean();
 
     if (!student) {
       res.status(404).json({ message: 'Student not found' });
       return;
     }
 
-    // Convert Map to object for JSON response
-    const studentResponse: any = student.toObject();
-    if (studentResponse.socialLinks instanceof Map) {
-      studentResponse.socialLinks = Object.fromEntries(studentResponse.socialLinks) as Record<string, string>;
+    // Check if viewing own profile
+    const isOwnProfile = currentUserId && student._id.toString() === currentUserId.toString();
+
+    // Get followers and following counts and previews (more efficient than populating all)
+    const followersArray = student.followers || [];
+    const followingArray = student.following || [];
+    
+    const [followers, following] = await Promise.all([
+      // Get limited followers for preview (first 6)
+      followersArray.length > 0
+        ? Student.find({ _id: { $in: followersArray.slice(0, 6) } })
+            .select('username name avatar googleGmailPhoto')
+            .lean()
+        : Promise.resolve([]),
+      // Get limited following for preview (first 6)
+      followingArray.length > 0
+        ? Student.find({ _id: { $in: followingArray.slice(0, 6) } })
+            .select('username name avatar googleGmailPhoto')
+            .lean()
+        : Promise.resolve([]),
+    ]);
+    
+    const followersCount = followersArray.length;
+    const followingCount = followingArray.length;
+
+    // Populate courses with course details (only if there are enrollments)
+    let enrichedCourses = student.coursesEnrolledIn || [];
+    if (enrichedCourses.length > 0) {
+      const courseIds = enrichedCourses
+        .map((enrollment: any) => {
+          if (!enrollment.courseId) return null;
+          return enrollment.courseId instanceof mongoose.Types.ObjectId 
+            ? enrollment.courseId 
+            : new mongoose.Types.ObjectId(enrollment.courseId);
+        })
+        .filter((id: any) => id !== null);
+
+      if (courseIds.length > 0) {
+        const courses = await Course.find({ _id: { $in: courseIds } })
+          .select('title description thumbnail category level isFree')
+          .lean();
+
+        // Create course map for quick lookup
+        const courseMap = new Map(courses.map(course => [course._id.toString(), course]));
+
+        // Enhance coursesEnrolledIn with course details
+        enrichedCourses = enrichedCourses.map((enrollment: any) => {
+          const courseId = enrollment.courseId instanceof mongoose.Types.ObjectId
+            ? enrollment.courseId.toString()
+            : enrollment.courseId?.toString();
+          const course = courseMap.get(courseId);
+          
+          return {
+            ...enrollment,
+            course: course ? {
+              _id: course._id,
+              title: course.title,
+              description: course.description,
+              thumbnail: course.thumbnail,
+              category: course.category,
+              level: course.level,
+              isFree: course.isFree,
+            } : null,
+          };
+        });
+      }
     }
+
+    // Check if current user is following this profile
+    let isFollowing = false;
+    if (currentUserId && !isOwnProfile) {
+      const currentUser = await Student.findById(currentUserId)
+        .select('following')
+        .lean();
+      isFollowing = currentUser?.following?.some(
+        (id: mongoose.Types.ObjectId) => id.toString() === student._id.toString()
+      ) || false;
+    }
+
+    // Fetch threads for this user
+    const userThreads = await Thread.find({ author: student._id })
+      .populate({
+        path: 'author',
+        select: 'username name avatar googleGmailPhoto',
+      })
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .lean();
+
+    // Format threads for response
+    const formattedThreads = userThreads.map((thread: any) => {
+      // Check if current user has liked this thread
+      const liked = currentUserId && thread.likes && thread.likes.some(
+        (likeId: mongoose.Types.ObjectId | string) => {
+          const likeIdStr = typeof likeId === 'string' ? likeId : likeId.toString();
+          return likeIdStr === currentUserId.toString();
+        }
+      );
+
+      // Check if current user has shared this thread
+      const sharesArray = Array.isArray(thread.shares) ? thread.shares : [];
+      const shared = currentUserId && sharesArray.length > 0 && sharesArray.some(
+        (shareId: mongoose.Types.ObjectId | string) => {
+          const shareIdStr = typeof shareId === 'string' ? shareId : shareId.toString();
+          return shareIdStr === currentUserId.toString();
+        }
+      );
+
+      return {
+        id: thread._id.toString(),
+        author: {
+          id: thread.author?._id?.toString() || '',
+          username: thread.author?.username || '',
+          name: thread.author?.name || thread.author?.username || '',
+          avatar: thread.author?.avatar || null,
+          googleGmailPhoto: thread.author?.googleGmailPhoto || null,
+        },
+        content: thread.content,
+        images: thread.images || [],
+        likes: thread.likes ? thread.likes.length : 0,
+        comments: thread.comments ? thread.comments.length : 0,
+        shares: sharesArray.length || (thread.shares || 0),
+        liked: liked || false,
+        shared: shared || false,
+        createdAt: thread.createdAt.toISOString(),
+      };
+    });
+
+    // Convert Map to object for JSON response
+    const studentResponse: any = {
+      ...student,
+      followersCount,
+      followingCount,
+      followers: followers.map((f: any) => ({
+        _id: f._id,
+        username: f.username,
+        name: f.name,
+        avatar: f.avatar || f.googleGmailPhoto,
+      })),
+      following: following.map((f: any) => ({
+        _id: f._id,
+        username: f.username,
+        name: f.name,
+        avatar: f.avatar || f.googleGmailPhoto,
+      })),
+      coursesEnrolledIn: enrichedCourses,
+      threads: formattedThreads,
+      isFollowing: isOwnProfile ? undefined : isFollowing,
+      isOwnProfile,
+    };
+
+    if (student.socialLinks instanceof Map) {
+      studentResponse.socialLinks = Object.fromEntries(student.socialLinks);
+    } else if (student.socialLinks) {
+      studentResponse.socialLinks = student.socialLinks;
+    }
+
+    // Generate ETag for caching
+    const responseString = JSON.stringify(studentResponse);
+    const etag = crypto.createHash('md5').update(responseString).digest('hex');
+    
+    // Check if client has cached version
+    const clientEtag = req.headers['if-none-match'];
+    if (clientEtag && clientEtag === `"${etag}"`) {
+      res.status(304).end();
+      return;
+    }
+
+    // Set ETag header
+    res.set('ETag', `"${etag}"`);
+    res.set('Cache-Control', 'private, max-age=60'); // Cache for 60 seconds
 
     res.json(studentResponse);
   } catch (error) {
+    console.error('Error fetching student profile:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    res.status(500).json({ message: 'Failed to fetch student', error: errorMessage });
+    
+    // Handle specific MongoDB errors
+    if (error instanceof mongoose.Error.CastError) {
+      res.status(400).json({ message: 'Invalid username format', error: errorMessage });
+      return;
+    }
+    
+    res.status(500).json({ message: 'Failed to fetch student profile', error: errorMessage });
   }
 });
 

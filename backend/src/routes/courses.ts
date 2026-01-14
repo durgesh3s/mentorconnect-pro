@@ -53,6 +53,41 @@ interface CoursesQueryParams {
   sortOrder?: 'asc' | 'desc';
 }
 
+// ==================== PUBLIC ROUTES ====================
+
+// Get public statistics (no auth required)
+router.get('/stats', async (_req: Request, res: Response): Promise<void> => {
+  try {
+    const [
+      activeStudents,
+      totalCourses,
+      internshipsPlaced,
+    ] = await Promise.all([
+      // Active students: students with at least one course enrollment
+      Student.countDocuments({ 'coursesEnrolledIn.0': { $exists: true } }),
+      // Total courses: published courses
+      Course.countDocuments({ isPublished: true }),
+      // Internships placed: students with Offer Letter or LOI tags
+      Student.countDocuments({
+        $or: [
+          { 'tagged.tagType': 'Offer Letter' },
+          { 'tagged.tagType': 'LOI' },
+        ],
+      }),
+    ]);
+
+    res.json({
+      activeStudents,
+      totalCourses,
+      internshipsPlaced,
+    });
+  } catch (error) {
+    console.error('Stats endpoint error:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    res.status(500).json({ message: 'Failed to fetch statistics', error: errorMessage });
+  }
+});
+
 // ==================== ADMIN ROUTES ====================
 
 // Get all courses (Admin) - with filters

@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Navigation } from "@/components/ui/navigation";
+import { ScrollReveal } from "@/components/ScrollReveal";
 import { formatPrice } from "@/lib/utils";
 import { useProfileStore } from "@/lib/stores/profileStore";
 import { useAuthStore } from "@/lib/stores/authStore";
@@ -132,13 +133,26 @@ function AnimatedCounter({ target, suffix = "" }: { target: number; suffix?: str
   return <span>{count}{suffix}</span>;
 }
 
+interface Stats {
+  activeStudents: number;
+  totalCourses: number;
+  internshipsPlaced: number;
+}
+
 export default function Index() {
   const { setThreads } = useProfileStore();
   const { isAuthenticated } = useAuthStore();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [featuredThreads, setFeaturedThreads] = useState<BackendThread[]>([]);
   const [featuredCourses, setFeaturedCourses] = useState<TransformedCourse[]>([]);
   const [videoLoading, setVideoLoading] = useState(true);
   const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<Stats>({
+    activeStudents: 0,
+    totalCourses: 0,
+    internshipsPlaced: 0,
+  });
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
@@ -156,6 +170,16 @@ export default function Index() {
     const fetchData = async () => {
       try {
         setLoading(true);
+        
+        // Fetch statistics
+        try {
+          const statsResponse = await apiClient.get<Stats>("/courses/stats");
+          setStats(statsResponse);
+        } catch (statsError) {
+          console.error("Failed to fetch statistics", statsError);
+          // Keep default values (0) if stats fail
+        }
+        
         const threadsResponse = await apiClient.get<BackendThread[] | ThreadsResponse>("/feed", { params: { limit: 6 } });
         // Handle different response structures
         const threadsData = Array.isArray(threadsResponse) 
@@ -246,6 +270,51 @@ export default function Index() {
     fetchData();
   }, [setThreads]);
 
+  // Handle hash navigation - scroll to section when hash is present in URL
+  useEffect(() => {
+    const hash = location.hash || window.location.hash;
+    
+    if (!hash) return;
+
+    const scrollToElement = () => {
+      const element = document.querySelector(hash);
+      if (element) {
+        // Account for fixed navbar height
+        const navbarHeight = 80;
+        const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+        const offsetPosition = elementPosition - navbarHeight;
+
+        window.scrollTo({
+          top: offsetPosition,
+          behavior: 'smooth'
+        });
+        return true;
+      }
+      return false;
+    };
+
+    // Try scrolling with multiple attempts to handle async content loading
+    const attemptScroll = () => {
+      if (scrollToElement()) {
+        return; // Success, no need for more attempts
+      }
+      
+      // Retry after a short delay
+      setTimeout(() => {
+        if (!scrollToElement()) {
+          // Final retry after longer delay
+          setTimeout(scrollToElement, 500);
+        }
+      }, 100);
+    };
+
+    // Wait a bit for content to render, especially if still loading
+    const delay = loading ? 600 : 100;
+    const timeoutId = setTimeout(attemptScroll, delay);
+
+    return () => clearTimeout(timeoutId);
+  }, [location.hash, location.pathname, loading]);
+
   return (
     <div className="min-h-screen bg-background text-foreground page-transition relative overflow-hidden">
       <Navigation />
@@ -270,69 +339,76 @@ export default function Index() {
       </div>
 
       {/* Hero Section */}
-      <section className="relative pt-32 pb-16 px-4 overflow-hidden z-10">
-        <div className="container mx-auto max-w-6xl">
-          <div className="text-center space-y-6 animate-fade-in-up">
-            <Badge className="bg-foreground/10 backdrop-blur-sm border border-foreground/20 px-4 py-1.5 text-foreground">
-              <Rocket className="h-3.5 w-3.5 mr-2" />
-              Guaranteed Internships for Top Performers
-            </Badge>
+      <section className="relative pt-32 pb-12 px-4 sm:px-6 lg:px-8 overflow-hidden z-10">
+        <div className="container mx-auto max-w-7xl">
+          <div className="text-center space-y-8 animate-fade-in-up">
+            <div className="inline-block animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
+              <Badge className="bg-foreground/10 backdrop-blur-sm border border-foreground/20 px-5 py-2 text-sm font-medium text-foreground hover:bg-foreground/15 transition-all duration-300">
+                <Rocket className="h-4 w-4 mr-2 inline-block" />
+                Guaranteed Internships for Top Performers
+              </Badge>
+            </div>
 
-            <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-foreground">
-              Learn From Industry
-              <span className="block text-foreground mt-2">Experts & Get Hired</span>
-            </h1>
+            <div className="space-y-4 animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
+              <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-bold tracking-tight text-foreground leading-tight">
+                Learn From Industry
+                <span className="block text-foreground mt-3">Experts & Get Hired</span>
+              </h1>
+            </div>
 
-            <p className="text-xl text-foreground/80 max-w-2xl mx-auto leading-relaxed">
-              Join subscription-based courses led by industry experts. Master JavaScript, DSA, and modern frameworks. Top 10
-              students get guaranteed 3-month internships.
-            </p>
+            <div className="animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
+              <p className="text-lg sm:text-xl md:text-2xl text-foreground/80 max-w-3xl mx-auto leading-relaxed font-light">
+                Join subscription-based courses led by industry experts. Master JavaScript, DSA, and modern frameworks. Top 10
+                students get guaranteed 3-month internships.
+              </p>
+            </div>
 
-            {!isAuthenticated && (
-              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-2">
-                <Link to="/auth/select-role">
-                  <Button size="lg" className="bg-foreground text-background hover:bg-foreground/90 text-lg px-8 h-14 border-2 border-foreground">
-                    Start Learning Now
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-4 animate-fade-in-up" style={{ animationDelay: "0.4s" }}>
+              {!isAuthenticated && (
+                <>
+                  <Link to="/auth/select-role">
+                    <Button size="lg" className="bg-foreground text-background hover:bg-foreground/90 text-base sm:text-lg px-8 sm:px-10 h-12 sm:h-14 border-2 border-foreground rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-xl">
+                      Start Learning Now
+                      <ArrowRight className="ml-2 h-5 w-5" />
+                    </Button>
+                  </Link>
+                  <Link to="/courses">
+                    <Button size="lg" variant="outline" className="text-base sm:text-lg px-8 sm:px-10 h-12 sm:h-14 border-2 border-foreground rounded-xl transition-all duration-300 hover:scale-105 hover:bg-foreground hover:text-background">
+                      Browse Courses
+                    </Button>
+                  </Link>
+                </>
+              )}
+              
+              {isAuthenticated && (
+                <Link to="/courses">
+                  <Button size="lg" className="bg-foreground text-background hover:bg-foreground/90 text-base sm:text-lg px-8 sm:px-10 h-12 sm:h-14 border-2 border-foreground rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-xl">
+                    Browse Courses
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>
-                <Link to="/courses">
-                  <Button size="lg" className="bg-foreground text-background hover:bg-foreground/90 text-lg px-8 h-14 border-2 border-foreground">
-                    Browse Courses
-                  </Button>
-                </Link>
-              </div>
-            )}
-            
-            {isAuthenticated && (
-              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center pt-2">
-                <Link to="/courses">
-                  <Button size="lg" className="bg-foreground text-background hover:bg-foreground/90 text-lg px-8 h-14 border-2 border-foreground">
-                    Browse Courses
-                  </Button>
-                </Link>
-              </div>
-            )}
+              )}
+            </div>
 
             {/* Stats */}
-            <div className="grid grid-cols-3 gap-8 max-w-3xl mx-auto pt-8">
-              <div className="space-y-1 stagger-item animate-fade-in-up" style={{ animationDelay: "0.1s" }}>
-                <p className="text-3xl font-bold text-foreground">
-                  <AnimatedCounter target={500} suffix="+" />
+            <div className="grid grid-cols-3 gap-6 sm:gap-8 max-w-4xl mx-auto pt-12 sm:pt-16 animate-fade-in-up" style={{ animationDelay: "0.5s" }}>
+              <div className="space-y-2 stagger-item">
+                <p className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground">
+                  <AnimatedCounter target={stats.activeStudents} suffix="+" />
                 </p>
-                <p className="text-sm text-foreground/60">Active Students</p>
+                <p className="text-xs sm:text-sm text-foreground/60 font-medium">Active Students</p>
               </div>
-              <div className="space-y-1 stagger-item animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
-                <p className="text-3xl font-bold text-foreground">
-                  <AnimatedCounter target={50} suffix="+" />
+              <div className="space-y-2 stagger-item">
+                <p className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground">
+                  <AnimatedCounter target={stats.totalCourses} suffix="+" />
                 </p>
-                <p className="text-sm text-foreground/60">Expert Instructors</p>
+                <p className="text-xs sm:text-sm text-foreground/60 font-medium">Total Courses</p>
               </div>
-              <div className="space-y-1 stagger-item animate-fade-in-up" style={{ animationDelay: "0.3s" }}>
-                <p className="text-3xl font-bold text-foreground">
-                  <AnimatedCounter target={200} suffix="+" />
+              <div className="space-y-2 stagger-item">
+                <p className="text-3xl sm:text-4xl md:text-5xl font-bold text-foreground">
+                  <AnimatedCounter target={stats.internshipsPlaced} suffix="+" />
                 </p>
-                <p className="text-sm text-foreground/60">Internships Placed</p>
+                <p className="text-xs sm:text-sm text-foreground/60 font-medium">Internships Placed</p>
               </div>
             </div>
           </div>
@@ -340,20 +416,26 @@ export default function Index() {
       </section>
 
       {/* 3D Workflow Section - Marquee */}
-      <section id="how-it-works" className="relative py-16 px-4 z-10">
+      <section id="how-it-works" className="relative py-12 px-4 sm:px-6 lg:px-8 z-10">
         <div className="container mx-auto max-w-7xl">
-          <div className="mb-12 animate-fade-in-up">
-            <Badge className="bg-foreground/10 backdrop-blur-sm border border-foreground/20 px-4 py-1.5 text-foreground mb-4">
-              How It Works
-            </Badge>
-            <h2 className="text-4xl md:text-6xl font-bold text-foreground mb-4">
-              Your Journey to Success
-            </h2>
-            <p className="text-foreground/80 text-lg">Simple 3-step process to launch your career</p>
-          </div>
+          <ScrollReveal animationType="fadeInUp" delay={0} duration={0.9} threshold={0.2}>
+            <div className="mb-16 text-center">
+              <div className="inline-block mb-5">
+                <Badge className="bg-foreground/10 backdrop-blur-sm border border-foreground/20 px-5 py-2 text-sm font-medium text-foreground hover:bg-foreground/15 transition-all duration-300">
+                  How It Works
+                </Badge>
+              </div>
+              <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-foreground mb-4 leading-tight">
+                Your Journey to Success
+              </h2>
+              <p className="text-base sm:text-lg md:text-xl text-foreground/80 max-w-2xl mx-auto font-light">
+                Simple 3-step process to launch your career
+              </p>
+            </div>
+          </ScrollReveal>
 
           {/* Marquee Container */}
-          <div className="marquee-container mt-16">
+          <div className="marquee-container mt-12">
             <div className="marquee-content">
               {/* Original 3 cards */}
               {[
@@ -367,16 +449,16 @@ export default function Index() {
               ].map((step, idx) => (
                 <div
                   key={idx}
-                  className="flex-shrink-0 w-[400px] md:w-[500px]"
+                  className="flex-shrink-0 w-[360px] sm:w-[400px] md:w-[450px] lg:w-[500px] px-3"
                 >
-                  <div className="bg-card/50 backdrop-blur-md border border-border rounded-3xl p-8 h-full transform transition-all duration-500 hover:scale-105 hover:-translate-y-4">
-                    <div className="w-20 h-20 bg-foreground/10 rounded-2xl flex items-center justify-center mb-6 border border-border">
-                      <span className="text-4xl font-bold text-foreground">{step.num}</span>
+                  <div className="bg-card/50 backdrop-blur-md border border-border rounded-2xl p-8 sm:p-10 h-full transform transition-all duration-500 hover:scale-105 hover:-translate-y-2 hover:shadow-2xl">
+                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-foreground/10 rounded-xl sm:rounded-2xl flex items-center justify-center mb-6 border border-border transition-all duration-300 hover:bg-foreground/15">
+                      <span className="text-3xl sm:text-4xl font-bold text-foreground">{step.num}</span>
                     </div>
-                    <h3 className="text-2xl font-bold text-foreground mb-4">{step.title}</h3>
-                    <p className="text-foreground/70 leading-relaxed mb-6">{step.desc}</p>
-                    <div className="flex items-center gap-2 text-sm text-foreground">
-                      <CheckCircle2 className="h-4 w-4" />
+                    <h3 className="text-xl sm:text-2xl font-bold text-foreground mb-4 leading-tight">{step.title}</h3>
+                    <p className="text-foreground/70 leading-relaxed mb-6 text-sm sm:text-base">{step.desc}</p>
+                    <div className="flex items-center gap-2 text-sm text-foreground font-medium">
+                      <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
                       <span>{step.feature}</span>
                     </div>
                   </div>
@@ -388,17 +470,21 @@ export default function Index() {
       </section>
 
       {/* Features Section - Marquee */}
-      <section className="relative py-16 px-4 z-10">
-        <div className="container mx-auto max-w-6xl">
-          <div className="mb-12 animate-fade-in-up">
-            <Badge className="bg-foreground/10 backdrop-blur-sm border border-foreground/20 px-4 py-1.5 text-foreground mb-4">
-              Why Choose Us
-            </Badge>
-            <h2 className="text-4xl md:text-5xl font-bold text-foreground">
-              Everything You Need to
-              <span className="block text-foreground mt-2">Launch Your Career</span>
-            </h2>
-          </div>
+      <section className="relative py-12 px-4 sm:px-6 lg:px-8 z-10">
+        <div className="container mx-auto max-w-7xl">
+          <ScrollReveal animationType="fadeInUp" delay={0} duration={0.9} threshold={0.2}>
+            <div className="mb-16 text-center">
+              <div className="inline-block mb-5">
+                <Badge className="bg-foreground/10 backdrop-blur-sm border border-foreground/20 px-5 py-2 text-sm font-medium text-foreground hover:bg-foreground/15 transition-all duration-300">
+                  Why Choose Us
+                </Badge>
+              </div>
+              <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-foreground leading-tight">
+                Everything You Need to
+                <span className="block text-foreground mt-3">Launch Your Career</span>
+              </h2>
+            </div>
+          </ScrollReveal>
 
           {/* Marquee Container */}
           <div className="marquee-container mt-12">
@@ -414,13 +500,13 @@ export default function Index() {
               ].map((feature, idx) => {
                 const IconComponent = feature.icon;
                 return (
-                  <div key={idx} className="flex-shrink-0 w-[350px] md:w-[400px]">
-                    <Card className="p-8 cred-hover border-border bg-card/50 backdrop-blur-md h-full">
-                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-foreground/10 border border-border mb-6 animate-zoom-in">
-                        <IconComponent className="h-6 w-6 text-foreground" />
+                  <div key={idx} className="flex-shrink-0 w-[340px] sm:w-[380px] md:w-[400px] px-3">
+                    <Card className="p-8 sm:p-10 cred-hover border-border bg-card/50 backdrop-blur-md h-full transition-all duration-300">
+                      <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-foreground/10 border border-border mb-6 transition-all duration-300 hover:bg-foreground/15 hover:scale-110">
+                        <IconComponent className="h-7 w-7 text-foreground" />
                       </div>
-                      <h3 className="text-xl font-semibold mb-3 text-foreground">{feature.title}</h3>
-                      <p className="text-foreground/70 leading-relaxed">{feature.desc}</p>
+                      <h3 className="text-xl sm:text-2xl font-bold mb-4 text-foreground leading-tight">{feature.title}</h3>
+                      <p className="text-foreground/70 leading-relaxed text-sm sm:text-base">{feature.desc}</p>
                     </Card>
                   </div>
                 );
@@ -431,18 +517,24 @@ export default function Index() {
       </section>
 
       {/* Featured Tutorials Section - Marquee */}
-      <section className="relative py-16 px-4 z-10">
-        <div className="container mx-auto max-w-6xl">
-          <div className="mb-12 animate-fade-in-up">
-            <Badge className="bg-foreground/10 backdrop-blur-sm border border-foreground/20 px-4 py-1.5 text-foreground mb-4">
-              Popular Courses
-            </Badge>
-            <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-2">
-              Start Learning Today
-              <span className="block text-foreground mt-2">Featured Tutorials</span>
-            </h2>
-            <p className="text-foreground/80">Hand-picked courses from industry experts</p>
-          </div>
+      <section className="relative py-12 px-4 sm:px-6 lg:px-8 z-10">
+        <div className="container mx-auto max-w-7xl">
+          <ScrollReveal animationType="fadeInUp" delay={0} duration={0.9} threshold={0.2}>
+            <div className="mb-16 text-center">
+              <div className="inline-block mb-5">
+                <Badge className="bg-foreground/10 backdrop-blur-sm border border-foreground/20 px-5 py-2 text-sm font-medium text-foreground hover:bg-foreground/15 transition-all duration-300">
+                  Popular Courses
+                </Badge>
+              </div>
+              <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-foreground mb-4 leading-tight">
+                Start Learning Today
+                <span className="block text-foreground mt-3">Featured Tutorials</span>
+              </h2>
+              <p className="text-base sm:text-lg text-foreground/80 max-w-2xl mx-auto font-light">
+                Hand-picked courses from industry experts
+              </p>
+            </div>
+          </ScrollReveal>
 
           {/* Marquee Container */}
           <div className="marquee-container mt-12">
@@ -450,15 +542,15 @@ export default function Index() {
               {featuredCourses.length > 0 ? (
                 // Render real courses
                 featuredCourses.map((course) => (
-                  <div key={course.id} className="flex-shrink-0 w-[350px] md:w-[400px]">
-                    <Card className="overflow-hidden cred-hover border-border bg-card/50 backdrop-blur-md h-full">
-                      <Link to={`/courses/${course.id}`}>
-                        <div className="aspect-video bg-foreground/5 relative overflow-hidden">
+                  <div key={course.id} className="flex-shrink-0 w-[340px] sm:w-[380px] md:w-[400px] px-3">
+                    <Card className="overflow-hidden cred-hover border-border bg-card/50 backdrop-blur-md h-full transition-all duration-300">
+                      <Link to={`/courses/${course.id}`} className="block h-full">
+                        <div className="aspect-video bg-foreground/5 relative overflow-hidden group">
                           {course.thumbnail ? (
                             <img
                               src={course.thumbnail}
                               alt={course.title}
-                              className="w-full h-full object-cover"
+                              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                               onError={(e) => {
                                 const target = e.target as HTMLImageElement;
                                 target.style.display = 'none';
@@ -474,27 +566,27 @@ export default function Index() {
                             <Play className="h-12 w-12 text-foreground/20" />
                           </div>
                           <div className="absolute top-4 right-4">
-                            <Badge className="bg-background/50 backdrop-blur-sm border border-border text-foreground">
-                              <Star className="h-3 w-3 mr-1 fill-foreground text-foreground" />
+                            <Badge className="bg-background/80 backdrop-blur-sm border border-border text-foreground px-3 py-1.5">
+                              <Star className="h-3.5 w-3.5 mr-1.5 fill-foreground text-foreground" />
                               {course.rating > 0 ? course.rating.toFixed(1) : 'N/A'}
                             </Badge>
                           </div>
                         </div>
-                        <div className="p-6">
-                          <h3 className="font-semibold mb-2 line-clamp-2 text-foreground">{course.title}</h3>
-                          <div className="flex items-center gap-2 mb-4">
-                            <Avatar className="h-6 w-6">
-                              <AvatarFallback className="bg-foreground/10 text-foreground text-xs">{course.initial}</AvatarFallback>
+                        <div className="p-6 sm:p-8">
+                          <h3 className="font-bold text-lg mb-3 line-clamp-2 text-foreground leading-tight">{course.title}</h3>
+                          <div className="flex items-center gap-2.5 mb-5">
+                            <Avatar className="h-7 w-7">
+                              <AvatarFallback className="bg-foreground/10 text-foreground text-xs font-semibold">{course.initial}</AvatarFallback>
                             </Avatar>
-                            <span className="text-sm text-foreground/60">{course.instructor}</span>
+                            <span className="text-sm text-foreground/70 font-medium">{course.instructor}</span>
                           </div>
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4 text-sm text-foreground/60">
-                              <span className="flex items-center gap-1">
+                          <div className="flex items-center justify-between pt-4 border-t border-border/50">
+                            <div className="flex items-center gap-5 text-sm text-foreground/70">
+                              <span className="flex items-center gap-1.5 font-medium">
                                 <Users className="h-4 w-4" />
                                 {course.students}
                               </span>
-                              <span className="flex items-center gap-1">
+                              <span className="flex items-center gap-1.5 font-medium">
                                 <Clock className="h-4 w-4" />
                                 {course.duration || 20}h
                               </span>
@@ -510,8 +602,8 @@ export default function Index() {
                 ))
               ) : (
                 // Show message if no courses available
-                <div className="flex-shrink-0 w-full text-center py-8">
-                  <p className="text-foreground/60">No courses available at the moment.</p>
+                <div className="flex-shrink-0 w-full text-center py-16">
+                  <p className="text-foreground/60 text-lg">No courses available at the moment.</p>
                 </div>
               )}
             </div>
@@ -520,18 +612,24 @@ export default function Index() {
       </section>
 
       {/* Featured Threads Section - Marquee */}
-      <section className="relative py-16 px-4 z-10">
-        <div className="container mx-auto max-w-6xl">
-          <div className="mb-12 animate-fade-in-up">
-            <Badge className="bg-foreground/10 backdrop-blur-sm border border-foreground/20 px-4 py-1.5 text-foreground mb-4">
-              Community
-            </Badge>
-            <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-2">
-              Latest from Our
-              <span className="block text-foreground mt-2">Community</span>
-            </h2>
-            <p className="text-foreground/80">See what students are sharing and learning</p>
-          </div>
+      <section className="relative py-12 px-4 sm:px-6 lg:px-8 z-10">
+        <div className="container mx-auto max-w-7xl">
+          <ScrollReveal animationType="fadeInUp" delay={0} duration={0.9} threshold={0.2}>
+            <div className="mb-16 text-center">
+              <div className="inline-block mb-5">
+                <Badge className="bg-foreground/10 backdrop-blur-sm border border-foreground/20 px-5 py-2 text-sm font-medium text-foreground hover:bg-foreground/15 transition-all duration-300">
+                  Community
+                </Badge>
+              </div>
+              <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-bold text-foreground mb-4 leading-tight">
+                Latest from Our
+                <span className="block text-foreground mt-3">Community</span>
+              </h2>
+              <p className="text-base sm:text-lg text-foreground/80 max-w-2xl mx-auto font-light">
+                See what students are sharing and learning
+              </p>
+            </div>
+          </ScrollReveal>
 
           {/* Marquee Container */}
           <div className="marquee-container mt-12">
@@ -541,30 +639,30 @@ export default function Index() {
                 featuredThreads.map((thread) => {
                   const initial = thread.author?.name?.[0]?.toUpperCase() || thread.author?.username?.[0]?.toUpperCase() || "?";
                   return (
-                    <div key={thread.id} className="flex-shrink-0 w-[350px] md:w-[400px]">
+                    <div key={thread.id} className="flex-shrink-0 w-[340px] sm:w-[380px] md:w-[400px] px-3">
                       <Link to={`/feed?thread=${thread.id}`}>
-                        <Card className="p-6 cred-hover border-border bg-card/50 backdrop-blur-md h-full cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-lg">
-                          <div className="flex items-start gap-4 mb-4">
-                            <Avatar>
+                        <Card className="p-6 sm:p-8 cred-hover border-border bg-card/50 backdrop-blur-md h-full cursor-pointer transition-all duration-300">
+                          <div className="flex items-start gap-4 mb-5">
+                            <Avatar className="h-10 w-10">
                               <AvatarImage src={thread.author?.avatar || thread.author?.googleGmailPhoto} />
-                              <AvatarFallback className="bg-foreground/10 text-foreground">{initial}</AvatarFallback>
+                              <AvatarFallback className="bg-foreground/10 text-foreground font-semibold">{initial}</AvatarFallback>
                             </Avatar>
-                            <div className="flex-1">
-                              <p className="font-semibold text-foreground">{thread.author?.name || thread.author?.username}</p>
+                            <div className="flex-1 min-w-0">
+                              <p className="font-bold text-foreground truncate">{thread.author?.name || thread.author?.username}</p>
                               <p className="text-sm text-foreground/60">@{thread.author?.username}</p>
                             </div>
                           </div>
-                          <p className="mb-4 line-clamp-3 text-foreground/90">{thread.content}</p>
-                          <div className="flex items-center gap-4 text-sm text-foreground/60">
-                            <div className="flex items-center gap-1">
+                          <p className="mb-5 line-clamp-3 text-foreground/90 leading-relaxed text-sm sm:text-base">{thread.content}</p>
+                          <div className="flex items-center gap-5 text-sm text-foreground/70 pt-4 border-t border-border/50">
+                            <div className="flex items-center gap-1.5 font-medium">
                               <Heart className="h-4 w-4" />
                               {thread.likes || 0}
                             </div>
-                            <div className="flex items-center gap-1">
+                            <div className="flex items-center gap-1.5 font-medium">
                               <MessageSquare className="h-4 w-4" />
                               {thread.comments || 0}
                             </div>
-                            <span className="ml-auto">{formatDate(thread.createdAt)}</span>
+                            <span className="ml-auto text-xs">{formatDate(thread.createdAt)}</span>
                           </div>
                         </Card>
                       </Link>
@@ -573,8 +671,8 @@ export default function Index() {
                 })
               ) : (
                 // Show message if no threads available
-                <div className="flex-shrink-0 w-full text-center py-8">
-                  <p className="text-foreground/60">No community posts available at the moment.</p>
+                <div className="flex-shrink-0 w-full text-center py-16">
+                  <p className="text-foreground/60 text-lg">No community posts available at the moment.</p>
                 </div>
               )}
             </div>
@@ -584,73 +682,126 @@ export default function Index() {
 
       {/* CTA Section */}
       {!isAuthenticated && (
-        <section className="relative py-16 px-4 z-10">
-          <div className="container mx-auto max-w-4xl">
-            <Card className="relative overflow-hidden p-12 border-2 border-foreground bg-card/50 backdrop-blur-md animate-zoom-in">
-              <div className="text-center space-y-6 text-foreground">
-                <h2 className="text-4xl md:text-5xl font-bold">Ready to Start Your Journey?</h2>
-                <p className="text-xl text-foreground/80 max-w-2xl mx-auto">
-                  Join thousands of students learning from industry experts and landing their dream internships.
-                </p>
-                <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-                  <Link to="/auth/select-role">
-                    <Button size="lg" className="text-lg px-8 h-14 bg-foreground text-background hover:bg-foreground/90 cred-hover border-2 border-foreground">
-                      Create Account
-                      <ArrowRight className="ml-2 h-5 w-5" />
-                    </Button>
-                  </Link>
+        <section className="relative py-12 px-4 sm:px-6 lg:px-8 z-10">
+          <div className="container mx-auto max-w-5xl">
+            <ScrollReveal animationType="scaleIn" delay={0} duration={0.9} threshold={0.2}>
+              <Card className="relative overflow-hidden p-10 sm:p-12 md:p-16 border-2 border-foreground bg-card/50 backdrop-blur-md">
+                <div className="text-center space-y-6 sm:space-y-8 text-foreground">
+                  <h2 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
+                    Ready to Start Your Journey?
+                  </h2>
+                  <p className="text-lg sm:text-xl md:text-2xl text-foreground/80 max-w-2xl mx-auto font-light leading-relaxed">
+                    Join thousands of students learning from industry experts and landing their dream internships.
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-4 justify-center pt-6">
+                    <Link to="/auth/select-role">
+                      <Button size="lg" className="text-base sm:text-lg px-8 sm:px-10 h-12 sm:h-14 bg-foreground text-background hover:bg-foreground/90 border-2 border-foreground rounded-xl transition-all duration-300 hover:scale-105 hover:shadow-xl">
+                        Create Account
+                        <ArrowRight className="ml-2 h-5 w-5" />
+                      </Button>
+                    </Link>
+                  </div>
                 </div>
-              </div>
-            </Card>
+              </Card>
+            </ScrollReveal>
           </div>
         </section>
       )}
 
       {/* Footer */}
-      <footer className="relative border-t border-border py-12 px-4 bg-background/50 backdrop-blur-sm z-10">
-        <div className="container mx-auto max-w-6xl">
-          <div className="grid md:grid-cols-4 gap-8">
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-foreground/10 border border-border">
+      <footer className="relative border-t border-border py-16 sm:py-20 px-4 sm:px-6 lg:px-8 bg-background/50 backdrop-blur-sm z-10">
+        <div className="container mx-auto max-w-7xl">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 sm:gap-12">
+            <div className="space-y-5">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-foreground/10 border border-border transition-all duration-300 hover:bg-foreground/15">
                   <GraduationCap className="h-5 w-5 text-foreground" />
                 </div>
-                <span className="font-bold text-foreground">Mentorise</span>
+                <span className="font-bold text-lg text-foreground">Mentorise</span>
               </div>
-              <p className="text-sm text-foreground/60">
+              <p className="text-sm sm:text-base text-foreground/70 leading-relaxed max-w-xs">
                 Empowering students with industry-ready skills and guaranteed career opportunities.
               </p>
             </div>
 
             <div>
-              <h4 className="font-semibold mb-4 text-foreground">Platform</h4>
-              <ul className="space-y-2 text-sm text-foreground/60">
-                <li><Link to="/courses" className="hover:text-foreground transition-base">Courses</Link></li>
-                <li><Link to="/feed" className="hover:text-foreground transition-base">Community</Link></li>
-                <li><Link to="/certificates" className="hover:text-foreground transition-base">Certificates</Link></li>
+              <h4 className="font-bold text-base mb-5 text-foreground">Platform</h4>
+              <ul className="space-y-3 text-sm sm:text-base text-foreground/70">
+                <li>
+                  <Link to="/courses" className="hover:text-foreground transition-all duration-300 hover:translate-x-1 inline-block">
+                    Courses
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/feed" className="hover:text-foreground transition-all duration-300 hover:translate-x-1 inline-block">
+                    Community
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/certificates" className="hover:text-foreground transition-all duration-300 hover:translate-x-1 inline-block">
+                    Certificates
+                  </Link>
+                </li>
               </ul>
             </div>
 
             <div>
-              <h4 className="font-semibold mb-4 text-foreground">Company</h4>
-              <ul className="space-y-2 text-sm text-foreground/60">
-                <li><a href="#how-it-works" className="hover:text-foreground transition-base">How It Works</a></li>
-                <li><Link to="/internships" className="hover:text-foreground transition-base">Internships</Link></li>
+              <h4 className="font-bold text-base mb-5 text-foreground">Company</h4>
+              <ul className="space-y-3 text-sm sm:text-base text-foreground/70">
+                <li>
+                  <Link 
+                    to="/" 
+                    onClick={(e) => {
+                      if (window.location.pathname !== '/') {
+                        navigate('/#how-it-works');
+                      } else {
+                        e.preventDefault();
+                        const element = document.querySelector('#how-it-works');
+                        if (element) {
+                          const navbarHeight = 80;
+                          const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+                          const offsetPosition = elementPosition - navbarHeight;
+                          window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+                        }
+                      }
+                    }}
+                    className="hover:text-foreground transition-all duration-300 hover:translate-x-1 inline-block"
+                  >
+                    How It Works
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/internships" className="hover:text-foreground transition-all duration-300 hover:translate-x-1 inline-block">
+                    Internships
+                  </Link>
+                </li>
               </ul>
             </div>
 
             <div>
-              <h4 className="font-semibold mb-4 text-foreground">Support</h4>
-              <ul className="space-y-2 text-sm text-foreground/60">
-                <li><Link to="/dashboard/student" className="hover:text-foreground transition-base">Dashboard</Link></li>
-                <li><a href="mailto:support@mentorise.in" className="hover:text-foreground transition-base">Help Center</a></li>
-                <li><a href="mailto:support@mentorise.in" className="hover:text-foreground transition-base">Contact Us</a></li>
+              <h4 className="font-bold text-base mb-5 text-foreground">Support</h4>
+              <ul className="space-y-3 text-sm sm:text-base text-foreground/70">
+                <li>
+                  <Link to="/dashboard/student" className="hover:text-foreground transition-all duration-300 hover:translate-x-1 inline-block">
+                    Dashboard
+                  </Link>
+                </li>
+                <li>
+                  <a href="mailto:support@mentorise.in" className="hover:text-foreground transition-all duration-300 hover:translate-x-1 inline-block">
+                    Help Center
+                  </a>
+                </li>
+                <li>
+                  <a href="mailto:support@mentorise.in" className="hover:text-foreground transition-all duration-300 hover:translate-x-1 inline-block">
+                    Contact Us
+                  </a>
+                </li>
               </ul>
             </div>
           </div>
 
-          <div className="mt-12 pt-8 border-t border-border text-center text-sm text-foreground/60">
-            <p>&copy; 2024 Mentorise. All rights reserved.</p>
+          <div className="mt-12 sm:mt-16 pt-8 border-t border-border text-center">
+            <p className="text-sm sm:text-base text-foreground/60">&copy; 2024 Mentorise. All rights reserved.</p>
           </div>
         </div>
       </footer>

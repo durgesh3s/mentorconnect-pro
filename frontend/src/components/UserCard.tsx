@@ -1,9 +1,6 @@
 import { Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { MapPin, GraduationCap, UserPlus, UserMinus } from "lucide-react";
 import { useState } from "react";
 import { apiClient } from "@/lib/api/client";
 import { useAuthStore } from "@/lib/stores/authStore";
@@ -80,88 +77,66 @@ export function UserCard({
   const avatarSrc = user.avatar || user.googleGmailPhoto;
 
   return (
-    <Link to={`/profile/${user.username}`}>
-      <Card className="p-4 bg-white/5 backdrop-blur-md border-white/10 hover:border-white/20 transition-all group cursor-pointer">
-        <div className="flex items-start gap-4">
-          <Avatar className="h-12 w-12 border-2 border-white/20 group-hover:border-white/40 transition-colors">
-            <AvatarImage src={avatarSrc} />
-            <AvatarFallback className="bg-gradient-to-br from-blue-500 to-purple-600 text-white font-semibold">
-              {displayName[0]?.toUpperCase() || "U"}
-            </AvatarFallback>
-          </Avatar>
+    <div className="flex items-center justify-between py-2.5 px-4 hover:bg-accent/50 transition-colors">
+      <Link to={`/profile/${user.username}`} className="flex items-center gap-3 flex-1 min-w-0">
+        <Avatar className="h-10 w-10 flex-shrink-0">
+          <AvatarImage src={avatarSrc} className="object-cover" />
+          <AvatarFallback className="bg-gradient-to-br from-purple-500 to-pink-500 text-white font-medium text-sm">
+            {displayName[0]?.toUpperCase() || "U"}
+          </AvatarFallback>
+        </Avatar>
 
-          <div className="flex-1 min-w-0 space-y-2">
-            <div className="flex items-start justify-between gap-2">
-              <div className="min-w-0 flex-1">
-                <h3 className="font-semibold text-white truncate group-hover:text-primary transition-colors">
-                  {displayName}
-                </h3>
-                <p className="text-sm text-white/60 truncate">@{user.username}</p>
-              </div>
-              {showFollowButton && !isOwnProfile && currentUser && (
-                <Button
-                  variant={isFollowing ? "outline" : "default"}
-                  size="sm"
-                  onClick={handleFollow}
-                  disabled={isLoading}
-                  className="shrink-0 border-white/30 text-white hover:bg-white/20 hover:border-white/40 transition-all"
-                >
-                  {isLoading ? (
-                    <div className="h-4 w-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                  ) : isFollowing ? (
-                    <>
-                      <UserMinus className="h-3.5 w-3.5 mr-1.5" />
-                      Following
-                    </>
-                  ) : (
-                    <>
-                      <UserPlus className="h-3.5 w-3.5 mr-1.5" />
-                      Follow
-                    </>
-                  )}
-                </Button>
-              )}
-            </div>
-
-            {user.description && (
-              <p className="text-sm text-white/80 line-clamp-2">{user.description}</p>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2">
+            <h3 className="font-semibold text-foreground text-sm truncate">
+              {displayName}
+            </h3>
+          </div>
+          <div className="flex items-center gap-2 mt-0.5">
+            <p className="text-xs text-muted-foreground truncate">@{user.username}</p>
+            {(user.location || user.education) && (
+              <span className="text-xs text-muted-foreground/60">•</span>
             )}
-
-            <div className="flex flex-wrap items-center gap-3 text-xs text-white/60">
-              {user.location && (
-                <div className="flex items-center gap-1">
-                  <MapPin className="h-3 w-3" />
-                  <span className="capitalize">{user.location}</span>
-                </div>
-              )}
-              {user.education && (
-                <div className="flex items-center gap-1">
-                  <GraduationCap className="h-3 w-3" />
-                  <span className="capitalize">{user.education}</span>
-                </div>
-              )}
-            </div>
-
-            {user.fieldsOfInterest && user.fieldsOfInterest.length > 0 && (
-              <div className="flex flex-wrap gap-1.5 pt-1">
-                {user.fieldsOfInterest.slice(0, 3).map((field, idx) => (
-                  <Badge
-                    key={idx}
-                    className="bg-gradient-to-r from-blue-500/20 to-cyan-500/20 text-blue-300 border-blue-400/40 px-1.5 py-0.5 text-[10px] font-medium"
-                  >
-                    {field}
-                  </Badge>
-                ))}
-                {user.fieldsOfInterest.length > 3 && (
-                  <Badge className="bg-white/10 text-white/60 border-white/20 px-1.5 py-0.5 text-[10px] font-medium">
-                    +{user.fieldsOfInterest.length - 3}
-                  </Badge>
-                )}
-              </div>
+            {user.location && (
+              <span className="text-xs text-muted-foreground capitalize truncate">
+                {user.location}
+              </span>
+            )}
+            {user.education && (
+              <span className="text-xs text-muted-foreground capitalize truncate">
+                {user.education}
+              </span>
             )}
           </div>
+          {user.description && (
+            <p className="text-xs text-foreground/80 mt-0.5 line-clamp-1 truncate">
+              {user.description}
+            </p>
+          )}
         </div>
-      </Card>
-    </Link>
+      </Link>
+
+      {showFollowButton && !isOwnProfile && currentUser && (
+        <Button
+          variant={isFollowing ? "outline" : "default"}
+          size="sm"
+          onClick={handleFollow}
+          disabled={isLoading}
+          className={`shrink-0 ml-2 h-7 px-3.5 text-xs font-semibold rounded-md transition-all ${
+            isFollowing
+              ? "border-border text-foreground hover:bg-accent bg-transparent"
+              : "bg-blue-500 hover:bg-blue-600 text-white border-0"
+          }`}
+        >
+          {isLoading ? (
+            <div className="h-3 w-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
+          ) : isFollowing ? (
+            "Following"
+          ) : (
+            "Follow"
+          )}
+        </Button>
+      )}
+    </div>
   );
 }

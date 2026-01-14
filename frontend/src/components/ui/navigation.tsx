@@ -5,12 +5,14 @@ import { useState, useEffect } from "react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useAuthStore } from "@/lib/stores/authStore";
 import { toast } from "sonner";
+import { SearchDrawer } from "@/components/SearchDrawer";
 
 export function Navigation() {
   const { user, isAuthenticated, logout } = useAuthStore();
   const navigate = useNavigate();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isAtTop, setIsAtTop] = useState(true);
+  const [searchDrawerOpen, setSearchDrawerOpen] = useState(false);
 
   const handleLogout = () => {
     logout();
@@ -62,19 +64,39 @@ export function Navigation() {
                   Community
                 </Link>
                 {isAuthenticated && (
-                  <Link to="/users/search" className="text-sm font-medium text-foreground/80 hover:text-foreground transition-base flex items-center gap-1">
+                  <button
+                    onClick={() => setSearchDrawerOpen(true)}
+                    className="text-sm font-medium text-foreground/80 hover:text-foreground transition-base flex items-center gap-1"
+                  >
                     <Search className="h-4 w-4" />
                     Search
-                  </Link>
+                  </button>
                 )}
                 {isAuthenticated && user?.role === "student" && (
                   <Link to="/letters" className="text-sm font-medium text-foreground/80 hover:text-foreground transition-base">
                     My Letters
                   </Link>
                 )}
-                <a href="#how-it-works" className="text-sm font-medium text-foreground/80 hover:text-foreground transition-base">
+                <Link 
+                  to="/" 
+                  onClick={(e) => {
+                    if (window.location.pathname !== '/') {
+                      navigate('/#how-it-works');
+                    } else {
+                      e.preventDefault();
+                      const element = document.querySelector('#how-it-works');
+                      if (element) {
+                        const navbarHeight = 80;
+                        const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+                        const offsetPosition = elementPosition - navbarHeight;
+                        window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+                      }
+                    }
+                  }}
+                  className="text-sm font-medium text-foreground/80 hover:text-foreground transition-base"
+                >
                   How It Works
-                </a>
+                </Link>
               </>
             )}
           </div>
@@ -162,14 +184,16 @@ export function Navigation() {
                   Community
                 </Link>
                 {isAuthenticated && (
-                  <Link
-                    to="/users/search"
-                    className="block py-2 text-sm font-medium text-foreground/80 hover:text-foreground transition-base px-4 flex items-center gap-2"
-                    onClick={() => setMobileMenuOpen(false)}
+                  <button
+                    onClick={() => {
+                      setSearchDrawerOpen(true);
+                      setMobileMenuOpen(false);
+                    }}
+                    className="block py-2 text-sm font-medium text-foreground/80 hover:text-foreground transition-base px-4 flex items-center gap-2 w-full text-left"
                   >
                     <Search className="h-4 w-4" />
                     Search
-                  </Link>
+                  </button>
                 )}
                 {isAuthenticated && user?.role === "student" && (
                   <Link
@@ -180,13 +204,27 @@ export function Navigation() {
                     My Letters
                   </Link>
                 )}
-                <a
-                  href="#how-it-works"
+                <Link
+                  to="/"
                   className="block py-2 text-sm font-medium text-foreground/80 hover:text-foreground transition-base px-4"
-                  onClick={() => setMobileMenuOpen(false)}
+                  onClick={(e) => {
+                    setMobileMenuOpen(false);
+                    if (window.location.pathname !== '/') {
+                      navigate('/#how-it-works');
+                    } else {
+                      e.preventDefault();
+                      const element = document.querySelector('#how-it-works');
+                      if (element) {
+                        const navbarHeight = 80;
+                        const elementPosition = element.getBoundingClientRect().top + window.pageYOffset;
+                        const offsetPosition = elementPosition - navbarHeight;
+                        window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
+                      }
+                    }
+                  }}
                 >
                   How It Works
-                </a>
+                </Link>
               </>
             )}
             <div className="flex flex-col gap-2 pt-4 border-t border-border px-4">
@@ -229,6 +267,11 @@ export function Navigation() {
           </div>
         )}
       </div>
+      
+      {/* Search Drawer */}
+      {isAuthenticated && (
+        <SearchDrawer open={searchDrawerOpen} onOpenChange={setSearchDrawerOpen} />
+      )}
     </nav>
   );
 }

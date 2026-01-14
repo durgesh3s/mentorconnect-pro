@@ -187,6 +187,48 @@
     }
   }
 
+  /* GSAP-like easing functions */
+  .ease-out-expo {
+    transition-timing-function: cubic-bezier(0.19, 1, 0.22, 1);
+  }
+
+  .ease-out-back {
+    transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .ease-out-quart {
+    transition-timing-function: cubic-bezier(0.25, 1, 0.5, 1);
+  }
+
+  .ease-out-cubic {
+    transition-timing-function: cubic-bezier(0.33, 1, 0.68, 1);
+  }
+
+  /* Performance optimizations for animations */
+  .will-change-transform {
+    will-change: transform;
+  }
+
+  .will-change-opacity {
+    will-change: opacity;
+  }
+
+  /* Smooth scroll behavior */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+
   /* Marquee Animation */
   @keyframes marquee {
     0% {
@@ -194,6 +236,37 @@
     }
     100% {
       transform: translateX(-50%);
+    }
+  }
+
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0px);
+    }
+    50% {
+      transform: translateY(-10px);
+    }
+  }
+
+  @keyframes slide-in-left {
+    from {
+      opacity: 0;
+      transform: translateX(-30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes slide-in-right {
+    from {
+      opacity: 0;
+      transform: translateX(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
     }
   }
 
@@ -207,13 +280,25 @@
 
   .marquee-content {
     display: flex;
-    animation: marquee 40s linear infinite;
-    gap: 2rem;
+    animation: marquee 50s linear infinite;
+    gap: 1.5rem;
     width: fit-content;
   }
 
   .marquee-content:hover {
     animation-play-state: paused;
+  }
+
+  .animate-float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  .animate-slide-in-left {
+    animation: slide-in-left 0.6s ease-out;
+  }
+
+  .animate-slide-in-right {
+    animation: slide-in-right 0.6s ease-out;
   }
 
   /* Text - Theme Aware */
@@ -314,12 +399,63 @@
   }
   
   .cred-hover {
-    @apply transition-all duration-300;
+    @apply transition-all duration-300 ease-out;
   }
   
   .cred-hover:hover {
-    transform: translateY(-4px) scale(1.02);
-    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+    transform: translateY(-6px) scale(1.02);
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15), 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  /* Smooth scroll reveal */
+  @media (prefers-reduced-motion: no-preference) {
+    .scroll-reveal {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+    }
+    
+    .scroll-reveal.revealed {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Stagger children animations */
+    .stagger-container > * {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.8s ease-out-expo, transform 0.8s ease-out-expo;
+    }
+
+    .stagger-container.opacity-100 > *:nth-child(1) {
+      transition-delay: calc(var(--stagger-delay, 0.1s) * 0);
+    }
+    .stagger-container.opacity-100 > *:nth-child(2) {
+      transition-delay: calc(var(--stagger-delay, 0.1s) * 1);
+    }
+    .stagger-container.opacity-100 > *:nth-child(3) {
+      transition-delay: calc(var(--stagger-delay, 0.1s) * 2);
+    }
+    .stagger-container.opacity-100 > *:nth-child(4) {
+      transition-delay: calc(var(--stagger-delay, 0.1s) * 3);
+    }
+    .stagger-container.opacity-100 > *:nth-child(5) {
+      transition-delay: calc(var(--stagger-delay, 0.1s) * 4);
+    }
+    .stagger-container.opacity-100 > *:nth-child(6) {
+      transition-delay: calc(var(--stagger-delay, 0.1s) * 5);
+    }
+    .stagger-container.opacity-100 > *:nth-child(7) {
+      transition-delay: calc(var(--stagger-delay, 0.1s) * 6);
+    }
+    .stagger-container.opacity-100 > *:nth-child(8) {
+      transition-delay: calc(var(--stagger-delay, 0.1s) * 7);
+    }
+
+    .stagger-container.opacity-100 > * {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
   
   /* CRED Button Style - Theme Aware */

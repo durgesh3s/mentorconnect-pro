@@ -188,20 +188,20 @@ export default function ProfileEdit() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white page-transition">
+    <div className="min-h-screen bg-background text-foreground page-transition">
       <Navigation />
 
       <div className="container mx-auto px-4 py-8 max-w-4xl pt-24">
-        <h1 className="text-3xl font-bold mb-6 text-white">Edit Profile</h1>
+        <h1 className="text-3xl font-bold mb-6 text-foreground">Edit Profile</h1>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Avatar */}
-          <Card className="p-6 bg-white/5 backdrop-blur-md border-white/10">
-            <Label className="text-sm font-medium text-white/80 mb-3 block">Avatar</Label>
+          <Card className="p-6 bg-card/50 backdrop-blur-md border-border">
+            <Label className="text-sm font-medium text-foreground/80 mb-3 block">Avatar</Label>
             <div className="mt-4 flex items-center gap-6">
-              <Avatar className="h-24 w-24 border-2 border-white/20">
+              <Avatar className="h-24 w-24 border-2 border-border">
                 <AvatarImage src={avatar || user?.googleGmailPhoto || undefined} />
-                <AvatarFallback className="text-2xl bg-gradient-to-br from-blue-500 to-purple-600 text-white">
+                <AvatarFallback className="text-2xl bg-gradient-to-br from-blue-500 to-purple-600 text-foreground">
                   {user.name[0]}
                 </AvatarFallback>
               </Avatar>
@@ -210,7 +210,7 @@ export default function ProfileEdit() {
                   type="button" 
                   variant="outline" 
                   disabled={uploading} 
-                  className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                  className="bg-foreground/10 border-border text-foregroundhover:bg-white/20"
                   onClick={() => fileInputRef.current?.click()}
                 >
                   {uploading ? (
@@ -238,27 +238,27 @@ export default function ProfileEdit() {
           </Card>
 
           {/* Name */}
-          <Card className="p-6 bg-white/5 backdrop-blur-md border-white/10">
-            <Label htmlFor="name" className="text-sm font-medium text-white/80 mb-2 block">
+          <Card className="p-6 bg-card/50 backdrop-blur-md border-border">
+            <Label htmlFor="name" className="text-sm font-medium text-foreground/80 mb-2 block">
               <User className="h-4 w-4 inline mr-2" />
               Full Name
             </Label>
             <Input
               id="name"
               {...register("name")}
-              className={`mt-2 bg-white/5 border-white/10 text-white ${errors.name ? "border-red-500" : ""}`}
+              className={`mt-2 bg-card/50 border-border text-foreground${errors.name ? "border-red-500" : ""}`}
               placeholder="Enter your full name"
             />
             {errors.name && <p className="text-sm text-red-400 mt-1">{errors.name.message}</p>}
           </Card>
 
           {/* Description */}
-          <Card className="p-6 bg-white/5 backdrop-blur-md border-white/10">
-            <Label htmlFor="description" className="text-sm font-medium text-white/80 mb-2 block">Description</Label>
+          <Card className="p-6 bg-card/50 backdrop-blur-md border-border">
+            <Label htmlFor="description" className="text-sm font-medium text-foreground/80 mb-2 block">Description</Label>
             <Textarea
               id="description"
               {...register("description")}
-              className={`mt-2 bg-white/5 border-white/10 text-white ${errors.description ? "border-red-500" : ""}`}
+              className={`mt-2 bg-card/50 border-border text-foreground${errors.description ? "border-red-500" : ""}`}
               rows={4}
               placeholder="Tell us more about yourself (minimum 10 characters)"
             />
@@ -266,24 +266,24 @@ export default function ProfileEdit() {
           </Card>
 
           {/* Contact Information */}
-          <Card className="p-6 bg-white/5 backdrop-blur-md border-white/10">
-            <Label className="text-sm font-medium text-white/80 mb-4 block">Contact Information</Label>
+          <Card className="p-6 bg-card/50 backdrop-blur-md border-border">
+            <Label className="text-sm font-medium text-foreground/80 mb-4 block">Contact Information</Label>
             <div className="space-y-4">
               <div>
-                <Label htmlFor="phone" className="text-xs text-white/60 mb-1.5 block">
+                <Label htmlFor="phone" className="text-xs text-foreground/60 mb-1.5 block">
                   <Phone className="h-3 w-3 inline mr-1" />
                   Phone Number
                 </Label>
                 <Input
                   id="phone"
                   {...register("phone")}
-                  className={`mt-1 bg-white/5 border-white/10 text-white ${errors.phone ? "border-red-500" : ""}`}
+                  className={`mt-1 bg-card/50 border-border text-foreground${errors.phone ? "border-red-500" : ""}`}
                   placeholder="+1234567890"
                 />
                 {errors.phone && <p className="text-sm text-red-400 mt-1">{errors.phone.message}</p>}
               </div>
               <div>
-                <Label htmlFor="location" className="text-xs text-white/60 mb-1.5 block">
+                <Label htmlFor="location" className="text-xs text-foreground/60 mb-1.5 block">
                   <MapPin className="h-3 w-3 inline mr-1" />
                   Location
                 </Label>
@@ -295,14 +295,14 @@ export default function ProfileEdit() {
                     setLocationInput(e.target.value);
                     setValue("location", e.target.value);
                   }}
-                  className={`mt-1 bg-white/5 border-white/10 text-white ${errors.location ? "border-red-500" : ""}`}
+                  className={`mt-1 bg-card/50 border-border text-foreground${errors.location ? "border-red-500" : ""}`}
                   placeholder="City, Country (e.g., Gorakhpur, India)"
                 />
-                <p className="text-xs text-white/40 mt-1">You can enhance this with a map library like Google Maps or Mapbox</p>
+                <p className="text-xs text-foreground/40 mt-1">You can enhance this with a map library like Google Maps or Mapbox</p>
                 {errors.location && <p className="text-sm text-red-400 mt-1">{errors.location.message}</p>}
               </div>
               <div>
-                <Label htmlFor="education" className="text-xs text-white/60 mb-1.5 block">
+                <Label htmlFor="education" className="text-xs text-foreground/60 mb-1.5 block">
                   <GraduationCap className="h-3 w-3 inline mr-1" />
                   Education Level
                 </Label>
@@ -310,10 +310,10 @@ export default function ProfileEdit() {
                   value={education}
                   onValueChange={(value) => setValue("education", value as "high" | "secondary" | "graduation")}
                 >
-                  <SelectTrigger className="mt-1 bg-white/5 border-white/10 text-white">
+                  <SelectTrigger className="mt-1 bg-card/50 border-border text-foreground">
                     <SelectValue placeholder="Select education level" />
                   </SelectTrigger>
-                  <SelectContent className="bg-black border-white/10">
+                  <SelectContent className="bg-background border-border">
                     <SelectItem value="high">High School</SelectItem>
                     <SelectItem value="secondary">Secondary</SelectItem>
                     <SelectItem value="graduation">Graduation</SelectItem>
@@ -324,8 +324,8 @@ export default function ProfileEdit() {
           </Card>
 
           {/* Fields of Interest */}
-          <Card className="p-6 bg-white/5 backdrop-blur-md border-white/10">
-            <Label className="text-sm font-medium text-white/80 mb-3 block">Fields of Interest</Label>
+          <Card className="p-6 bg-card/50 backdrop-blur-md border-border">
+            <Label className="text-sm font-medium text-foreground/80 mb-3 block">Fields of Interest</Label>
             <div className="mt-2 flex gap-2">
               <Input
                 value={interestInput}
@@ -337,9 +337,9 @@ export default function ProfileEdit() {
                   }
                 }}
                 placeholder="Add field (e.g., #database, #datascience)"
-                className="bg-white/5 border-white/10 text-white"
+                className="bg-card/50 border-border text-foreground"
               />
-              <Button type="button" onClick={addFieldOfInterest} className="bg-white/10 hover:bg-white/20">
+              <Button type="button" onClick={addFieldOfInterest} className="bg-foreground/10 hover:bg-white/20">
                 <X className="h-4 w-4 rotate-45" />
               </Button>
             </div>
@@ -360,8 +360,8 @@ export default function ProfileEdit() {
           </Card>
 
           {/* Skills */}
-          <Card className="p-6 bg-white/5 backdrop-blur-md border-white/10">
-            <Label className="text-sm font-medium text-white/80 mb-3 block">Skills</Label>
+          <Card className="p-6 bg-card/50 backdrop-blur-md border-border">
+            <Label className="text-sm font-medium text-foreground/80 mb-3 block">Skills</Label>
             <div className="mt-2 flex gap-2">
               <Input
                 value={skillInput}
@@ -373,9 +373,9 @@ export default function ProfileEdit() {
                   }
                 }}
                 placeholder="Add a skill"
-                className="bg-white/5 border-white/10 text-white"
+                className="bg-card/50 border-border text-foreground"
               />
-              <Button type="button" onClick={addSkill} className="bg-white/10 hover:bg-white/20">
+              <Button type="button" onClick={addSkill} className="bg-foreground/10 hover:bg-white/20">
                 <X className="h-4 w-4 rotate-45" />
               </Button>
             </div>
@@ -396,8 +396,8 @@ export default function ProfileEdit() {
           </Card>
 
           {/* Social Links */}
-          <Card className="p-6 bg-white/5 backdrop-blur-md border-white/10">
-            <Label className="text-sm font-medium text-white/80 mb-3 block">
+          <Card className="p-6 bg-card/50 backdrop-blur-md border-border">
+            <Label className="text-sm font-medium text-foreground/80 mb-3 block">
               <LinkIcon className="h-4 w-4 inline mr-2" />
               Social Links
             </Label>
@@ -406,22 +406,22 @@ export default function ProfileEdit() {
                 const Icon = platform.icon;
                 return (
                   <div key={platform.key} className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-lg bg-white/5 border border-white/10 flex items-center justify-center">
-                      <Icon className="h-5 w-5 text-white/60" />
+                    <div className="h-10 w-10 rounded-lg bg-card/50 border border-border flex items-center justify-center">
+                      <Icon className="h-5 w-5 text-foreground/60" />
                     </div>
                     <Input
                       type="url"
                       defaultValue={socialLinks[platform.key] || ""}
                       onBlur={(e) => updateSocialLink(platform.key, e.target.value)}
                       placeholder={`${platform.label} URL`}
-                      className="bg-white/5 border-white/10 text-white flex-1"
+                      className="bg-card/50 border-border text-foregroundflex-1"
                     />
                     {socialLinks[platform.key] && (
                       <Button
                         type="button"
                         variant="outline"
                         onClick={() => updateSocialLink(platform.key, "")}
-                        className="bg-white/10 border-white/20 text-white hover:bg-white/20"
+                        className="bg-foreground/10 border-border text-foregroundhover:bg-white/20"
                       >
                         <X className="h-4 w-4" />
                       </Button>
@@ -434,7 +434,7 @@ export default function ProfileEdit() {
 
           {/* Submit */}
           <div className="flex gap-4 pb-8">
-            <Button type="submit" className="bg-white text-black hover:bg-white/90 border-2 border-white" disabled={isSubmitting}>
+            <Button type="submit" className="bg-foreground text-background hover:bg-foreground/90 border-2 border-foreground" disabled={isSubmitting}>
               {isSubmitting ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -444,7 +444,7 @@ export default function ProfileEdit() {
                 "Save Changes"
               )}
             </Button>
-            <Button type="button" variant="outline" onClick={() => navigate(-1)} className="bg-white/10 border-white/20 text-white hover:bg-white/20">
+            <Button type="button" variant="outline" onClick={() => navigate(-1)} className="bg-foreground/10 border-border text-foregroundhover:bg-white/20">
               Cancel
             </Button>
           </div>

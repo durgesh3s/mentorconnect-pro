@@ -62,18 +62,18 @@ export default function ScheduleInterview() {
 
   if (submitted) {
     return (
-      <div className="min-h-screen bg-black text-white">
+      <div className="min-h-screen bg-background text-foreground">
         <Navigation />
         <div className="container mx-auto px-4 py-8 max-w-2xl pt-24">
-          <Card className="p-8 bg-white/5 backdrop-blur-md border-white/10 text-center">
+          <Card className="p-8 bg-card/50 backdrop-blur-md border-border text-center">
             <CheckCircle2 className="h-16 w-16 mx-auto mb-4 text-green-500" />
-            <h2 className="text-3xl font-bold mb-4 text-white">Interview Scheduled!</h2>
-            <p className="text-white/80 mb-6">
+            <h2 className="text-3xl font-bold mb-4 text-foreground">Interview Scheduled!</h2>
+            <p className="text-foreground/80 mb-6">
               Your interview has been scheduled. You will receive a confirmation email shortly.
             </p>
             <Button
               onClick={() => navigate("/dashboard/student")}
-              className="bg-white text-black hover:bg-white/90"
+              className="bg-foreground text-background hover:bg-foreground/90"
             >
               Go to Dashboard
             </Button>
@@ -84,33 +84,33 @@ export default function ScheduleInterview() {
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-background text-foreground">
       <Navigation />
       <div className="container mx-auto px-4 py-8 max-w-4xl pt-24">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2 text-white">Schedule Interview</h1>
-          <p className="text-white/80">Select your preferred date and time for the face-to-face interview</p>
+          <h1 className="text-3xl font-bold mb-2 text-foreground">Schedule Interview</h1>
+          <p className="text-foreground/80">Select your preferred date and time for the face-to-face interview</p>
         </div>
 
         <div className="grid md:grid-cols-2 gap-6">
-          <Card className="p-6 bg-white/5 backdrop-blur-md border-white/10">
-            <h2 className="text-xl font-semibold mb-4 text-white">Select Date</h2>
+          <Card className="p-6 bg-card/50 backdrop-blur-md border-border">
+            <h2 className="text-xl font-semibold mb-4 text-foreground">Select Date</h2>
             <Calendar
               mode="single"
               selected={selectedDate}
               onSelect={setSelectedDate}
               disabled={(date) => date < new Date()}
-              className="rounded-md border border-white/10"
+              className="rounded-md border border-border"
             />
           </Card>
 
-          <Card className="p-6 bg-white/5 backdrop-blur-md border-white/10">
-            <h2 className="text-xl font-semibold mb-4 text-white">Select Time</h2>
+          <Card className="p-6 bg-card/50 backdrop-blur-md border-border">
+            <h2 className="text-xl font-semibold mb-4 text-foreground">Select Time</h2>
             <div className="space-y-4">
               <div>
-                <Label className="text-white/80 mb-2 block">Time Slot</Label>
+                <Label className="text-foreground/80 mb-2 block">Time Slot</Label>
                 <Select value={selectedTime} onValueChange={setSelectedTime}>
-                  <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                  <SelectTrigger className="bg-card/50 border-border text-foreground">
                     <SelectValue placeholder="Select time" />
                   </SelectTrigger>
                   <SelectContent>
@@ -124,9 +124,9 @@ export default function ScheduleInterview() {
               </div>
 
               <div>
-                <Label className="text-white/80 mb-2 block">Interview Mode</Label>
+                <Label className="text-foreground/80 mb-2 block">Interview Mode</Label>
                 <Select value={preferredMode} onValueChange={setPreferredMode}>
-                  <SelectTrigger className="bg-white/5 border-white/10 text-white">
+                  <SelectTrigger className="bg-card/50 border-border text-foreground">
                     <SelectValue placeholder="Select mode" />
                   </SelectTrigger>
                   <SelectContent>
@@ -137,12 +137,12 @@ export default function ScheduleInterview() {
               </div>
 
               <div>
-                <Label className="text-white/80 mb-2 block">Additional Notes (Optional)</Label>
+                <Label className="text-foreground/80 mb-2 block">Additional Notes (Optional)</Label>
                 <Textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Any special requirements or notes..."
-                  className="bg-white/5 border-white/10 text-white"
+                  className="bg-card/50 border-border text-foreground"
                   rows={4}
                 />
               </div>
@@ -161,14 +161,14 @@ export default function ScheduleInterview() {
           <Button
             onClick={handleSubmit}
             disabled={loading || !selectedDate || !selectedTime}
-            className="bg-white text-black hover:bg-white/90"
+            className="bg-foreground text-background hover:bg-foreground/90"
           >
             {loading ? "Scheduling..." : "Schedule Interview"}
           </Button>
           <Button
             onClick={() => navigate("/dashboard/student")}
             variant="outline"
-            className="border-white/20 text-white hover:bg-white/10"
+            className="border-border text-foreground hover:bg-foreground/10"
           >
             Cancel
           </Button>

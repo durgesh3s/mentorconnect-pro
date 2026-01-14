@@ -63,7 +63,7 @@ export default function SelectRole() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-12 relative overflow-hidden page-transition bg-black pt-20">
+    <div className="min-h-screen flex items-center justify-center px-4 py-12 relative overflow-hidden page-transition bg-background pt-20">
       {/* Background Video */}
       <div className="fixed inset-0 -z-10 opacity-10">
         <video
@@ -74,7 +74,7 @@ export default function SelectRole() {
           className="w-full h-full object-cover"
         >
           <source src="https://videos.pexels.com/video-files/3045163/3045163-hd_1920_1080_30fps.mp4" type="video/mp4" />
-          <div className="absolute inset-0 bg-black" />
+          <div className="absolute inset-0 bg-background" />
         </video>
         <div className="absolute inset-0 bg-black/50" />
       </div>
@@ -83,62 +83,62 @@ export default function SelectRole() {
         {/* Header */}
         <div className="text-center mb-12">
           <div className="flex items-center justify-center gap-2 mb-6">
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/10 border border-white/20">
-              <GraduationCap className="h-7 w-7 text-white" />
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-foreground/10 border border-border">
+              <GraduationCap className="h-7 w-7 text-foreground" />
             </div>
-            <span className="text-2xl font-bold text-white">Mentorise</span>
+            <span className="text-2xl font-bold text-foreground">Mentorise</span>
           </div>
-          <h1 className="text-4xl md:text-5xl font-bold mb-4 text-white">Choose Your Path</h1>
-          <p className="text-xl text-white/80">Select your role to get started</p>
+          <h1 className="text-4xl md:text-5xl font-bold mb-4 text-foreground">Choose Your Path</h1>
+          <p className="text-xl text-foreground/80">Select your role to get started</p>
         </div>
 
         {/* Role Cards */}
         <div className="grid md:grid-cols-1 gap-6 mb-8 max-w-2xl mx-auto">
           {/* Student Card */}
           <Card
-            className={`p-8 cursor-pointer transition-all duration-300 cred-hover border-2 bg-white/5 backdrop-blur-md ${
+            className={`p-8 cursor-pointer transition-all duration-300 cred-hover border-2 bg-card/50 backdrop-blur-md ${
               selectedRole === "student"
-                ? "border-white glow"
-                : "border-white/20 hover:border-white/50"
+                ? "border-borderglow"
+                : "border-border hover:border-white/50"
             }`}
             onClick={() => setSelectedRole("student")}
           >
             <div className="relative">
               {/* Checkmark */}
               {selectedRole === "student" && (
-                <div className="absolute -top-4 -right-4 flex h-8 w-8 items-center justify-center rounded-full bg-white text-black animate-scale-in">
+                <div className="absolute -top-4 -right-4 flex h-8 w-8 items-center justify-center rounded-full bg-foreground text-background animate-scale-in">
                   <Check className="h-5 w-5" />
                 </div>
               )}
 
               {/* Icon */}
-              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10 border border-white/20 mb-6">
-                <GraduationCap className="h-8 w-8 text-white" />
+              <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-foreground/10 border border-border mb-6">
+                <GraduationCap className="h-8 w-8 text-foreground" />
               </div>
 
               {/* Content */}
-              <h3 className="text-2xl font-bold mb-3 text-white">I'm a Student</h3>
-              <p className="text-white/70 mb-6 leading-relaxed">
+              <h3 className="text-2xl font-bold mb-3 text-foreground">I'm a Student</h3>
+              <p className="text-foreground/70 mb-6 leading-relaxed">
                 Learn from industry experts, master in-demand skills, and compete for guaranteed internship opportunities.
               </p>
 
               {/* Features */}
               <ul className="space-y-3">
                 <li className="flex items-start gap-3">
-                  <Check className="h-5 w-5 text-white mt-0.5 flex-shrink-0" />
-                  <span className="text-sm text-white/80">Access to expert-led courses</span>
+                  <Check className="h-5 w-5 text-foregroundmt-0.5 flex-shrink-0" />
+                  <span className="text-sm text-foreground/80">Access to expert-led courses</span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <Check className="h-5 w-5 text-white mt-0.5 flex-shrink-0" />
-                  <span className="text-sm text-white/80">Real-time progress tracking & rankings</span>
+                  <Check className="h-5 w-5 text-foregroundmt-0.5 flex-shrink-0" />
+                  <span className="text-sm text-foreground/80">Real-time progress tracking & rankings</span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <Check className="h-5 w-5 text-white mt-0.5 flex-shrink-0" />
-                  <span className="text-sm text-white/80">Guaranteed internships for top performers</span>
+                  <Check className="h-5 w-5 text-foregroundmt-0.5 flex-shrink-0" />
+                  <span className="text-sm text-foreground/80">Guaranteed internships for top performers</span>
                 </li>
                 <li className="flex items-start gap-3">
-                  <Check className="h-5 w-5 text-white mt-0.5 flex-shrink-0" />
-                  <span className="text-sm text-white/80">Industry-recognized certifications</span>
+                  <Check className="h-5 w-5 text-foregroundmt-0.5 flex-shrink-0" />
+                  <span className="text-sm text-foreground/80">Industry-recognized certifications</span>
                 </li>
               </ul>
             </div>
@@ -149,7 +149,7 @@ export default function SelectRole() {
         {/* Error Alert */}
         {error && (
           <div className="mb-6 max-w-2xl mx-auto">
-            <Alert variant="destructive" className="bg-red-500/10 border-red-500/50 text-white">
+            <Alert variant="destructive" className="bg-red-500/10 border-red-500/50 text-foreground">
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>{error}</AlertDescription>
             </Alert>
@@ -162,7 +162,7 @@ export default function SelectRole() {
             size="lg"
             disabled={!selectedRole || loading}
             onClick={handleContinue}
-            className="bg-white text-black hover:bg-white/90 border-2 border-white text-lg px-12 h-14 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="bg-foreground text-background hover:bg-foreground/90 border-2 border-foreground text-lg px-12 h-14 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {loading ? (
               <>
@@ -176,9 +176,9 @@ export default function SelectRole() {
               </>
             )}
           </Button>
-          <p className="mt-6 text-sm text-white/60">
+          <p className="mt-6 text-sm text-foreground/60">
             Already have an account?{" "}
-            <button onClick={() => navigate("/auth/login")} className="text-white font-medium hover:underline">
+            <button onClick={() => navigate("/auth/login")} className="text-foregroundfont-medium hover:underline">
               Sign in
             </button>
           </p>

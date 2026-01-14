@@ -304,7 +304,7 @@ export default function CoursePlayer() {
 
   if (loading || !currentCourse) {
     return (
-      <div className="min-h-screen bg-black text-white page-transition">
+      <div className="min-h-screen bg-background text-foreground page-transition">
         <Navigation />
         <div className="flex items-center justify-center h-[calc(100vh-4rem)] pt-20">
           <div className="text-center">
@@ -356,26 +356,26 @@ export default function CoursePlayer() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white page-transition">
+    <div className="min-h-screen bg-background text-foreground page-transition">
       <Navigation />
 
       <div className="flex flex-col md:flex-row h-[calc(100vh-4rem)] pt-20">
         {/* Left Sidebar - Modules */}
-        <div className={`${isMobile ? (showLeftSidebar ? 'fixed inset-0 z-50' : 'hidden') : 'block'} md:relative md:w-80 border-r border-white/10 bg-black/40 backdrop-blur-sm overflow-hidden flex flex-col shadow-xl`}>
+        <div className={`${isMobile ? (showLeftSidebar ? 'fixed inset-0 z-50' : 'hidden') : 'block'} md:relative md:w-80 border-r border-border bg-background/40 backdrop-blur-sm overflow-hidden flex flex-col shadow-xl`}>
           {isMobile && (
-            <div className="flex items-center justify-between p-4 border-b border-white/10">
+            <div className="flex items-center justify-between p-4 border-b border-border">
               <h2 className="font-bold text-lg">Course Content</h2>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setShowLeftSidebar(false)}
-                className="text-white hover:bg-white/10"
+                className="text-foreground hover:bg-foreground/10"
               >
                 <X className="h-5 w-5" />
               </Button>
             </div>
           )}
-          <div className="p-4 border-b border-white/10 bg-gradient-to-r from-primary/10 to-transparent">
+          <div className="p-4 border-b border-border bg-gradient-to-r from-primary/10 to-transparent">
             <h2 className="font-bold text-lg leading-tight line-clamp-2">{currentCourse.title}</h2>
             <p className="text-xs text-muted-foreground mt-1">
               {videosList.length} {videosList.length === 1 ? 'video' : 'videos'}
@@ -429,7 +429,7 @@ export default function CoursePlayer() {
                           ? "bg-gradient-to-r from-primary/30 to-primary/10 text-primary border-l-4 border-primary shadow-lg"
                           : video.locked
                             ? "text-muted-foreground cursor-not-allowed opacity-50"
-                            : "hover:bg-white/5 hover:translate-x-1 border-l-4 border-transparent"
+                            : "hover:bg-card/50 hover:translate-x-1 border-l-4 border-transparent"
                       }`}
                     >
                       <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-colors ${
@@ -437,14 +437,14 @@ export default function CoursePlayer() {
                           ? "bg-primary/20" 
                           : video.completed 
                             ? "bg-green-500/20" 
-                            : "bg-white/5 group-hover:bg-white/10"
+                            : "bg-card/50 group-hover:bg-foreground/10"
                       }`}>
                         {video.completed ? (
                           <CheckCircle2 className="h-4 w-4 text-green-400" />
                         ) : video.locked ? (
                           <Lock className="h-4 w-4 text-muted-foreground" />
                         ) : (
-                          <Play className={`h-4 w-4 ${isSelected ? 'text-primary' : 'text-muted-foreground group-hover:text-white'}`} />
+                          <Play className={`h-4 w-4 ${isSelected ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground'}`} />
                         )}
                       </div>
                       <span className={`truncate flex-1 font-medium ${isSelected ? 'text-primary' : ''}`}>
@@ -453,7 +453,7 @@ export default function CoursePlayer() {
                       <span className={`ml-auto text-xs px-2 py-1 rounded ${
                         isSelected 
                           ? "bg-primary/20 text-primary" 
-                          : "text-muted-foreground bg-white/5"
+                          : "text-muted-foreground bg-card/50"
                       }`}>
                         {formatDuration(video.duration)}
                       </span>
@@ -523,8 +523,8 @@ export default function CoursePlayer() {
         <div className="flex-1 flex flex-col bg-gradient-to-br from-black via-black to-gray-900 min-w-0">
           {selectedLesson ? (
             <>
-              <div className="flex-1 bg-black flex items-center justify-center relative overflow-hidden shadow-2xl p-2 md:p-4 lg:p-6">
-                <div className="w-full h-full max-w-full max-h-full relative rounded-lg overflow-hidden border border-white/10 shadow-2xl">
+              <div className="flex-1 bg-background flex items-center justify-center relative overflow-hidden shadow-2xl p-2 md:p-4 lg:p-6">
+                <div className="w-full h-full max-w-full max-h-full relative rounded-lg overflow-hidden border border-border shadow-2xl">
                   <iframe
                     src={getVideoEmbedUrl(selectedLesson)}
                     className="w-full h-full absolute inset-0"
@@ -534,7 +534,7 @@ export default function CoursePlayer() {
                   <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none"></div>
                 </div>
               </div>
-              <div className="p-4 md:p-6 border-t border-white/10 bg-gradient-to-b from-black/80 to-black backdrop-blur-sm">
+              <div className="p-4 md:p-6 border-t border-border bg-gradient-to-b from-black/80 to-black backdrop-blur-sm">
                 <div className="flex flex-col md:flex-row items-start justify-between gap-4 mb-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-2 md:mb-0">
@@ -543,12 +543,12 @@ export default function CoursePlayer() {
                           variant="ghost"
                           size="icon"
                           onClick={() => setShowLeftSidebar(true)}
-                          className="text-white hover:bg-white/10 flex-shrink-0"
+                          className="text-foregroundhover:bg-foreground/10 flex-shrink-0"
                         >
                           <Menu className="h-5 w-5" />
                         </Button>
                       )}
-                      <h3 className="text-xl md:text-2xl font-bold text-white leading-tight break-words">{selectedLesson.title}</h3>
+                      <h3 className="text-xl md:text-2xl font-bold text-foreground leading-tight break-words">{selectedLesson.title}</h3>
                     </div>
                     <div className="flex flex-wrap items-center gap-2 md:gap-3 mt-2">
                       <span className="text-xs px-3 py-1 rounded-full bg-primary/20 text-primary font-medium">
@@ -573,7 +573,7 @@ export default function CoursePlayer() {
                         variant="outline"
                         size="sm"
                         onClick={() => setShowRightSidebar(true)}
-                        className="flex-1 md:flex-initial text-white border-white/20 hover:bg-white/10"
+                        className="flex-1 md:flex-initial text-foreground border-border hover:bg-foreground/10"
                       >
                         <BookOpen className="h-4 w-4 mr-2" />
                         Notes
@@ -581,8 +581,8 @@ export default function CoursePlayer() {
                     )}
                     <div className={`flex items-center gap-2 px-3 md:px-4 py-2 rounded-lg transition-colors ${
                       completed 
-                        ? 'bg-white/5 cursor-default' 
-                        : 'bg-white/5 hover:bg-white/10 cursor-pointer'
+                        ? 'bg-card/50 cursor-default' 
+                        : 'bg-card/50 hover:bg-foreground/10 cursor-pointer'
                     }`}>
                       <Checkbox
                         checked={completed}
@@ -611,7 +611,7 @@ export default function CoursePlayer() {
                 <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-primary/20 to-primary/10 flex items-center justify-center animate-pulse">
                   <BookOpen className="h-12 w-12 text-primary" />
                 </div>
-                <h3 className="text-xl font-semibold mb-2 text-white">Ready to Learn?</h3>
+                <h3 className="text-xl font-semibold mb-2 text-foreground">Ready to Learn?</h3>
                 <p className="text-muted-foreground">Select a lesson from the sidebar to start</p>
               </div>
             </div>
@@ -619,37 +619,37 @@ export default function CoursePlayer() {
         </div>
 
         {/* Right Sidebar - Notes & Resources */}
-        <div className={`${isMobile ? (showRightSidebar ? 'fixed inset-0 z-50' : 'hidden') : 'block'} md:relative md:w-80 border-l border-white/10 bg-black/40 backdrop-blur-sm overflow-hidden flex flex-col shadow-xl`}>
+        <div className={`${isMobile ? (showRightSidebar ? 'fixed inset-0 z-50' : 'hidden') : 'block'} md:relative md:w-80 border-l border-border bg-background/40 backdrop-blur-sm overflow-hidden flex flex-col shadow-xl`}>
           {isMobile && (
-            <div className="flex items-center justify-between p-4 border-b border-white/10">
+            <div className="flex items-center justify-between p-4 border-b border-border">
               <h2 className="font-bold text-lg">Notes & Resources</h2>
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setShowRightSidebar(false)}
-                className="text-white hover:bg-white/10"
+                className="text-foreground hover:bg-foreground/10"
               >
                 <X className="h-5 w-5" />
               </Button>
             </div>
           )}
           <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full">
-            <TabsList className="mx-4 mt-4 mb-0 bg-white/5 border border-white/10 rounded-lg p-1">
+            <TabsList className="mx-4 mt-4 mb-0 bg-card/50 border border-border rounded-lg p-1">
               <TabsTrigger 
                 value="notes" 
-                className="text-white data-[state=active]:bg-white data-[state=active]:text-black transition-all duration-200"
+                className="text-foreground data-[state=active]:bg-foreground data-[state=active]:text-background transition-all duration-200"
               >
                 Notes
               </TabsTrigger>
               <TabsTrigger 
                 value="resources"
-                className="text-white data-[state=active]:bg-white data-[state=active]:text-black transition-all duration-200"
+                className="text-foreground data-[state=active]:bg-foreground data-[state=active]:text-background transition-all duration-200"
               >
                 Resources
               </TabsTrigger>
               <TabsTrigger 
                 value="discussion"
-                className="text-white data-[state=active]:bg-white data-[state=active]:text-black transition-all duration-200"
+                className="text-foreground data-[state=active]:bg-foreground data-[state=active]:text-background transition-all duration-200"
               >
                 Q&A
               </TabsTrigger>
@@ -658,16 +658,16 @@ export default function CoursePlayer() {
             {activeTab === "notes" && (
             <div className="flex-1 overflow-hidden flex flex-col mx-4 mb-4 mt-4">
               <div className="mb-4">
-                <h4 className="text-sm font-semibold text-white mb-1">Your Notes</h4>
+                <h4 className="text-sm font-semibold text-foreground mb-1">Your Notes</h4>
                 <p className="text-xs text-muted-foreground">
                   {selectedLesson ? `Taking notes for: ${selectedLesson.title?.substring(0, 40)}...` : 'Select a video to take notes'}
                 </p>
               </div>
               {!selectedLesson ? (
-                <Card className="flex-1 flex items-center justify-center p-12 bg-white/5 backdrop-blur-md border-white/10">
+                <Card className="flex-1 flex items-center justify-center p-12 bg-card/50 backdrop-blur-md border-border">
                   <div className="text-center">
-                    <BookOpen className="h-12 w-12 mx-auto mb-4 text-white/30" />
-                    <h3 className="text-sm font-semibold mb-2 text-white/80">No video selected</h3>
+                    <BookOpen className="h-12 w-12 mx-auto mb-4 text-foreground/30" />
+                    <h3 className="text-sm font-semibold mb-2 text-foreground/80">No video selected</h3>
                     <p className="text-xs text-muted-foreground">Select a video from the playlist to start taking notes</p>
                   </div>
                 </Card>
@@ -679,7 +679,7 @@ export default function CoursePlayer() {
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
                   placeholder="Take notes here...&#10;&#10;Your notes are automatically saved per video. You can write key points, code snippets, or anything you find useful!"
-                        className="min-h-[400px] w-full resize-none bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:border-primary/50 focus:ring-primary/20 text-sm leading-relaxed"
+                        className="min-h-[400px] w-full resize-none bg-card/50 border-border text-foreground placeholder:text-foreground/40 focus:border-primary/50 focus:ring-primary/20 text-sm leading-relaxed"
                   disabled={!selectedLesson}
                 />
                     </div>
@@ -731,21 +731,21 @@ export default function CoursePlayer() {
             {activeTab === "resources" && (
             <div className="flex-1 overflow-hidden flex flex-col mx-4 mb-4 mt-4">
               <div className="mb-4">
-                <h4 className="text-sm font-semibold text-white mb-1">Video Resources</h4>
+                <h4 className="text-sm font-semibold text-foreground mb-1">Video Resources</h4>
                 <p className="text-xs text-muted-foreground">
                   {selectedLesson ? `Resources for: ${selectedLesson.title?.substring(0, 40)}...` : 'Select a video to view resources'}
                 </p>
               </div>
               {!selectedLesson ? (
-                <Card className="flex-1 flex items-center justify-center p-12 bg-white/5 backdrop-blur-md border-white/10">
+                <Card className="flex-1 flex items-center justify-center p-12 bg-card/50 backdrop-blur-md border-border">
                   <div className="text-center">
-                    <Bookmark className="h-12 w-12 mx-auto mb-4 text-white/30" />
-                    <h3 className="text-sm font-semibold mb-2 text-white/80">No video selected</h3>
+                    <Bookmark className="h-12 w-12 mx-auto mb-4 text-foreground/30" />
+                    <h3 className="text-sm font-semibold mb-2 text-foreground/80">No video selected</h3>
                     <p className="text-xs text-muted-foreground">Select a video from the playlist to view resources</p>
                   </div>
                 </Card>
               ) : loadingResources ? (
-                <Card className="flex-1 flex items-center justify-center p-12 bg-white/5 backdrop-blur-md border-white/10">
+                <Card className="flex-1 flex items-center justify-center p-12 bg-card/50 backdrop-blur-md border-border">
                   <div className="text-center">
                     <Loader2 className="h-8 w-8 mx-auto mb-4 animate-spin text-primary" />
                     <p className="text-sm text-muted-foreground">Loading resources...</p>
@@ -783,14 +783,14 @@ export default function CoursePlayer() {
                         };
                         
                         return (
-                          <Card key={index} className="p-4 bg-white/5 backdrop-blur-sm border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-200">
+                          <Card key={index} className="p-4 bg-card/50 backdrop-blur-sm border-border hover:bg-foreground/10 hover:border-border transition-all duration-200">
                             <div className="flex items-start gap-3">
-                              <div className="flex-shrink-0 mt-0.5 p-2 rounded-lg bg-white/5">
+                              <div className="flex-shrink-0 mt-0.5 p-2 rounded-lg bg-card/50">
                                 {getIcon()}
                               </div>
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-start justify-between gap-2 mb-2">
-                                  <p className="font-semibold text-white text-sm leading-tight">{resource.title}</p>
+                                  <p className="font-semibold text-foreground text-sm leading-tight">{resource.title}</p>
                                   {getTypeBadge()}
                                 </div>
                                 {resource.description && (
@@ -820,13 +820,13 @@ export default function CoursePlayer() {
                         );
                       })
                     ) : (
-                      <Card className="p-12 bg-white/5 backdrop-blur-md border-white/10 border-dashed">
+                      <Card className="p-12 bg-card/50 backdrop-blur-md border-border border-dashed">
                         <div className="flex flex-col items-center justify-center text-center gap-4">
-                          <div className="h-16 w-16 rounded-full bg-white/5 flex items-center justify-center">
-                            <Bookmark className="h-8 w-8 text-white/30" />
+                          <div className="h-16 w-16 rounded-full bg-card/50 flex items-center justify-center">
+                            <Bookmark className="h-8 w-8 text-foreground/30" />
                           </div>
                       <div>
-                            <h3 className="text-sm font-semibold mb-2 text-white">No resources available</h3>
+                            <h3 className="text-sm font-semibold mb-2 text-foreground">No resources available</h3>
                             <p className="text-xs text-muted-foreground max-w-xs">Resources will appear here when added by the instructor for this video</p>
                       </div>
                     </div>
@@ -841,11 +841,11 @@ export default function CoursePlayer() {
             {activeTab === "discussion" && (
             <div className="flex-1 overflow-hidden flex flex-col mx-4 mb-4 mt-4">
               <div className="mb-4">
-                <h4 className="text-sm font-semibold text-white mb-1">Course Q&A</h4>
+                <h4 className="text-sm font-semibold text-foreground mb-1">Course Q&A</h4>
                 <p className="text-xs text-muted-foreground">Ask questions and get help from the community</p>
                   </div>
               {loadingQuestions ? (
-                <Card className="flex-1 flex items-center justify-center p-12 bg-white/5 backdrop-blur-md border-white/10">
+                <Card className="flex-1 flex items-center justify-center p-12 bg-card/50 backdrop-blur-md border-border">
                   <div className="text-center">
                     <Loader2 className="h-8 w-8 mx-auto mb-4 animate-spin text-primary" />
                     <p className="text-sm text-muted-foreground">Loading questions...</p>
@@ -854,11 +854,11 @@ export default function CoursePlayer() {
               ) : (
                 <ScrollArea className="flex-1 -mx-2 px-2">
                   <div className="space-y-4 pr-2">
-                    <Card className="p-4 bg-white/5 backdrop-blur-sm border-white/10">
+                    <Card className="p-4 bg-card/50 backdrop-blur-sm border-border">
                       <div className="space-y-3">
                         <Textarea 
                           placeholder="Ask a question about this course..." 
-                          className="min-h-[100px] w-full bg-white/5 border-white/10 text-white placeholder:text-white/40 focus:border-primary/50 focus:ring-primary/20 resize-none"
+                          className="min-h-[100px] w-full bg-card/50 border-border text-foreground placeholder:text-foreground/40 focus:border-primary/50 focus:ring-primary/20 resize-none"
                           value={questionText}
                           onChange={(e) => setQuestionText(e.target.value)}
                         />
@@ -898,10 +898,10 @@ export default function CoursePlayer() {
                   <div className="space-y-4">
                       {questions.length > 0 ? (
                         questions.map((question) => (
-                        <Card key={question._id || question.id} className="p-4 bg-white/5 backdrop-blur-sm border-white/10 hover:bg-white/10 hover:border-white/20 transition-all duration-200">
+                        <Card key={question._id || question.id} className="p-4 bg-card/50 backdrop-blur-sm border-border hover:bg-foreground/10 hover:border-border transition-all duration-200">
                           <div className="space-y-4">
                         <div className="flex items-start gap-3">
-                              <Avatar className="h-9 w-9 border-2 border-white/10 flex-shrink-0">
+                              <Avatar className="h-9 w-9 border-2 border-border flex-shrink-0">
                                 <AvatarImage src={question.author?.avatar || question.author?.googleGmailPhoto} />
                                 <AvatarFallback className="bg-primary/20 text-primary text-xs font-semibold">
                                   {question.author?.name?.[0] || question.author?.username?.[0] || 'U'}
@@ -909,13 +909,13 @@ export default function CoursePlayer() {
                               </Avatar>
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 mb-2">
-                                  <p className="font-semibold text-sm text-white">
+                                  <p className="font-semibold text-sm text-foreground">
                                     {question.author?.name || question.author?.username || 'Student'}
                                   </p>
                                   <span className="text-xs text-muted-foreground">•</span>
                                   <span className="text-xs text-muted-foreground">{new Date(question.createdAt).toLocaleDateString()}</span>
                           </div>
-                                <p className="text-sm text-white/90 mb-3 leading-relaxed whitespace-pre-wrap">
+                                <p className="text-sm text-foreground/90 mb-3 leading-relaxed whitespace-pre-wrap">
                                   {question.question}
                                 </p>
                                 <div className="flex items-center gap-3 text-xs">
@@ -926,11 +926,11 @@ export default function CoursePlayer() {
                             
                             {/* Answers */}
                             {question.answers && question.answers.length > 0 && (
-                              <div className="ml-12 space-y-3 border-l-2 border-white/10 pl-4">
+                              <div className="ml-12 space-y-3 border-l-2 border-border pl-4">
                                 {question.answers.map((answer: any) => (
-                                  <div key={answer._id || answer.id} className="space-y-2 pb-2 border-b border-white/5 last:border-0 last:pb-0">
+                                  <div key={answer._id || answer.id} className="space-y-2 pb-2 border-b border-border/50 last:border-0 last:pb-0">
                                     <div className="flex items-start gap-2">
-                                      <Avatar className="h-7 w-7 border border-white/10">
+                                      <Avatar className="h-7 w-7 border border-border">
                                         <AvatarImage src={answer.author?.avatar || answer.author?.googleGmailPhoto} />
                                         <AvatarFallback className="bg-primary/20 text-primary text-[10px] font-semibold">
                                           {answer.author?.name?.[0] || answer.author?.username?.[0] || 'U'}
@@ -938,7 +938,7 @@ export default function CoursePlayer() {
                                       </Avatar>
                                       <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2 mb-1">
-                                          <p className="text-xs font-semibold text-white">
+                                          <p className="text-xs font-semibold text-foreground">
                                             {answer.author?.name || answer.author?.username || 'Student'}
                                           </p>
                                           {answer.isMentorAnswer && (
@@ -947,7 +947,7 @@ export default function CoursePlayer() {
                                           <span className="text-xs text-muted-foreground">•</span>
                                           <span className="text-xs text-muted-foreground">{new Date(answer.createdAt).toLocaleDateString()}</span>
                                         </div>
-                                        <p className="text-sm text-white/80 leading-relaxed whitespace-pre-wrap">{answer.answer}</p>
+                                        <p className="text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap">{answer.answer}</p>
                                       </div>
                                     </div>
                                   </div>
@@ -956,16 +956,16 @@ export default function CoursePlayer() {
                             )}
                             
                             {/* Answer Input */}
-                            <div className="ml-12 space-y-2 pt-3 border-t border-white/5">
+                            <div className="ml-12 space-y-2 pt-3 border-t border-border/50">
                               <Textarea
                                 placeholder="Write an answer..."
-                                className="min-h-[80px] w-full bg-white/5 border-white/10 text-white placeholder:text-white/40 text-sm focus:border-primary/50 focus:ring-primary/20 resize-none"
+                                className="min-h-[80px] w-full bg-card/50 border-border text-foreground placeholder:text-foreground/40 text-sm focus:border-primary/50 focus:ring-primary/20 resize-none"
                                 value={answerTexts[question._id || question.id] || ""}
                                 onChange={(e) => setAnswerTexts({ ...answerTexts, [question._id || question.id]: e.target.value })}
                               />
                               <Button
                                 size="sm"
-                                className="bg-gradient-to-r from-primary/80 to-primary/70 hover:from-primary hover:to-primary/90 text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed h-9"
+                                className="bg-gradient-to-r from-primary/80 to-primary/70 hover:from-primary hover:to-primary/90 text-primary-foreground font-medium disabled:opacity-50 disabled:cursor-not-allowed h-9"
                                 onClick={async () => {
                                   const answerText = answerTexts[question._id || question.id];
                                   if (!answerText?.trim() || !id) return;
@@ -1008,13 +1008,13 @@ export default function CoursePlayer() {
                         </Card>
                       ))
                     ) : (
-                      <Card className="p-8 bg-white/5 border-white/10 border-dashed">
+                      <Card className="p-8 bg-card/50 border-border border-dashed">
                         <div className="flex flex-col items-center justify-center text-center gap-3">
-                          <div className="h-12 w-12 rounded-full bg-white/5 flex items-center justify-center">
+                          <div className="h-12 w-12 rounded-full bg-card/50 flex items-center justify-center">
                             <MessageSquare className="h-6 w-6 text-muted-foreground" />
                           </div>
                           <div>
-                            <p className="font-medium text-white mb-1">No questions yet</p>
+                            <p className="font-medium text-foreground mb-1">No questions yet</p>
                             <p className="text-sm text-muted-foreground">Be the first to ask a question about this course</p>
                           </div>
                         </div>

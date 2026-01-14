@@ -271,7 +271,7 @@ export default function Feed() {
   }, [searchParams, threads]);
 
   return (
-    <div className="min-h-screen bg-black text-white page-transition">
+    <div className="min-h-screen bg-background text-foreground page-transition">
       <Navigation />
 
       <div className="container mx-auto px-4 py-8 max-w-3xl pt-24">
@@ -288,11 +288,11 @@ export default function Feed() {
         </div>
 
         <Tabs value={filter} onValueChange={(v) => setFilter(v as any)} className="mb-6">
-          <TabsList className="bg-white/5 border-white/10">
-            <TabsTrigger value="all" className="data-[state=active]:bg-white/10">
+          <TabsList className="bg-card/50 border-border">
+            <TabsTrigger value="all" className="data-[state=active]:bg-foreground/10">
               All
             </TabsTrigger>
-            <TabsTrigger value="following" className="data-[state=active]:bg-white/10">
+            <TabsTrigger value="following" className="data-[state=active]:bg-foreground/10">
               Following
             </TabsTrigger>
           </TabsList>
@@ -300,13 +300,13 @@ export default function Feed() {
 
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-white/40" />
+            <Loader2 className="h-8 w-8 animate-spin text-foreground/40" />
           </div>
         ) : (
           <div className="space-y-6">
             {threads.length === 0 ? (
-              <Card className="p-12 text-center bg-white/5 backdrop-blur-md border-white/10">
-                <p className="text-white/60">
+              <Card className="p-12 text-center bg-card/50 backdrop-blur-md border-border">
+                <p className="text-foreground/60">
                   {filter === "following"
                     ? "You're not following anyone yet. Start following people to see their threads!"
                     : "No threads yet. Be the first to create one!"}
@@ -316,7 +316,7 @@ export default function Feed() {
               threads.map((thread) => (
                 <Card
                   key={thread.id}
-                  className="p-6 bg-white/5 backdrop-blur-md border-white/10 hover:bg-white/10 transition-all duration-300 rounded-xl"
+                  className="p-6 bg-card/50 backdrop-blur-md border-border hover:bg-foreground/10 transition-all duration-300 rounded-xl"
                 >
                   <div className="flex items-start gap-4 mb-4">
                     <Link to={`/profile/${thread.author.username}`}>
@@ -324,7 +324,7 @@ export default function Feed() {
                         <AvatarImage
                           src={thread.author.avatar || thread.author.googleGmailPhoto}
                         />
-                        <AvatarFallback className="bg-white/10">
+                        <AvatarFallback className="bg-foreground/10">
                           {thread.author.name[0]}
                         </AvatarFallback>
                       </Avatar>
@@ -337,15 +337,15 @@ export default function Feed() {
                         >
                           {thread.author.name}
                         </Link>
-                        <span className="text-sm text-white/60">
+                        <span className="text-sm text-foreground/60">
                           @{thread.author.username}
                         </span>
-                        <span className="text-sm text-white/60">•</span>
-                        <span className="text-sm text-white/60">
+                        <span className="text-sm text-foreground/60">•</span>
+                        <span className="text-sm text-foreground/60">
                           {formatDate(thread.createdAt)}
                         </span>
                       </div>
-                      <p className="mb-4 whitespace-pre-wrap text-white/90 leading-relaxed">
+                      <p className="mb-4 whitespace-pre-wrap text-foreground/90 leading-relaxed">
                         {thread.content}
                       </p>
                       {thread.images && thread.images.length > 0 && (
@@ -370,13 +370,13 @@ export default function Feed() {
                                 className="rounded-lg object-cover w-full h-64 group-hover:scale-105 transition-transform duration-300"
                               />
                               <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">
-                                <ZoomIn className="h-8 w-8 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                                <ZoomIn className="h-8 w-8 text-foregroundopacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                               </div>
                             </div>
                           ))}
                         </div>
                       )}
-                      <div className="flex items-center gap-6 text-sm text-white/60 pt-2 border-t border-white/10">
+                      <div className="flex items-center gap-6 text-sm text-foreground/60 pt-2 border-t border-border">
                         <button
                           onClick={() => handleLike(thread.id)}
                           disabled={likingThreadId === thread.id}
@@ -413,12 +413,12 @@ export default function Feed() {
                               <span>{thread.shares}</span>
                             </button>
                           </PopoverTrigger>
-                          <PopoverContent className="w-56 bg-black border-white/10 p-2">
+                          <PopoverContent className="w-56 bg-background border-border p-2">
                             <div className="space-y-1">
                               {navigator.share && (
                                 <button
                                   onClick={() => handleShare(thread.id)}
-                                  className="w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-white/10 transition-colors text-left"
+                                  className="w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-foreground/10 transition-colors text-left"
                                 >
                                   <Share2 className="h-4 w-4" />
                                   <span>Share via...</span>
@@ -426,35 +426,35 @@ export default function Feed() {
                               )}
                               <button
                                 onClick={() => handleShare(thread.id, "copy")}
-                                className="w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-white/10 transition-colors text-left"
+                                className="w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-foreground/10 transition-colors text-left"
                               >
                                 <Copy className="h-4 w-4" />
                                 <span>Copy Link</span>
                               </button>
                               <button
                                 onClick={() => handleShare(thread.id, "twitter")}
-                                className="w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-white/10 transition-colors text-left"
+                                className="w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-foreground/10 transition-colors text-left"
                               >
                                 <Twitter className="h-4 w-4" />
                                 <span>Twitter</span>
                               </button>
                               <button
                                 onClick={() => handleShare(thread.id, "facebook")}
-                                className="w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-white/10 transition-colors text-left"
+                                className="w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-foreground/10 transition-colors text-left"
                               >
                                 <Facebook className="h-4 w-4" />
                                 <span>Facebook</span>
                               </button>
                               <button
                                 onClick={() => handleShare(thread.id, "linkedin")}
-                                className="w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-white/10 transition-colors text-left"
+                                className="w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-foreground/10 transition-colors text-left"
                               >
                                 <Linkedin className="h-4 w-4" />
                                 <span>LinkedIn</span>
                               </button>
                               <button
                                 onClick={() => handleShare(thread.id, "email")}
-                                className="w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-white/10 transition-colors text-left"
+                                className="w-full flex items-center gap-3 px-3 py-2 rounded-md hover:bg-foreground/10 transition-colors text-left"
                               >
                                 <Mail className="h-4 w-4" />
                                 <span>Email</span>
@@ -479,7 +479,7 @@ export default function Feed() {
           onClick={() => setZoomedImage(null)}
         >
           <button
-            className="absolute top-4 right-4 text-white hover:text-gray-300 transition-colors"
+            className="absolute top-4 right-4 text-foregroundhover:text-gray-300 transition-colors"
             onClick={() => setZoomedImage(null)}
           >
             <X className="h-8 w-8" />
@@ -495,7 +495,7 @@ export default function Feed() {
 
       {/* Comments Dialog */}
       <Dialog open={selectedThreadId !== null} onOpenChange={handleDialogClose}>
-        <DialogContent className="max-w-2xl max-h-[80vh] bg-black border-white/10 text-white">
+        <DialogContent className="max-w-2xl max-h-[80vh] bg-background border-border text-foreground">
           <DialogHeader>
             <DialogTitle className="text-xl">Comments</DialogTitle>
           </DialogHeader>
@@ -506,7 +506,7 @@ export default function Feed() {
                 placeholder="Write a comment..."
                 value={commentContent}
                 onChange={(e) => setCommentContent(e.target.value)}
-                className="bg-white/5 border-white/10 text-white resize-none"
+                className="bg-card/50 border-border text-foregroundresize-none"
                 rows={3}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
@@ -531,17 +531,17 @@ export default function Feed() {
             <div className="flex-1 overflow-y-auto space-y-4 pr-2 custom-scrollbar">
               {loadingComments ? (
                 <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-white/40" />
+                  <Loader2 className="h-6 w-6 animate-spin text-foreground/40" />
                 </div>
               ) : comments.length === 0 ? (
-                <p className="text-center text-white/60 py-8">
+                <p className="text-center text-foreground/60 py-8">
                   No comments yet. Be the first to comment!
                 </p>
               ) : (
                 comments.map((comment) => (
                   <div
                     key={comment.id}
-                    className="flex gap-3 p-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+                    className="flex gap-3 p-3 rounded-lg bg-card/50 hover:bg-foreground/10 transition-colors"
                   >
                     <Avatar className="h-8 w-8">
                       <AvatarImage
@@ -556,11 +556,11 @@ export default function Feed() {
                         <span className="font-semibold text-sm">
                           {comment.author.name}
                         </span>
-                        <span className="text-xs text-white/60">
+                        <span className="text-xs text-foreground/60">
                           {formatDate(comment.createdAt)}
                         </span>
                       </div>
-                      <p className="text-sm text-white/90">{comment.content}</p>
+                      <p className="text-sm text-foreground/90">{comment.content}</p>
                     </div>
                   </div>
                 ))

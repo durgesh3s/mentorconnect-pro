@@ -199,10 +199,10 @@ export default function CourseAssessment() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black text-white">
+      <div className="min-h-screen bg-background text-foreground">
         <Navigation />
         <div className="container mx-auto px-4 py-8 text-center pt-24">
-          <p className="text-white/80">Loading assessment...</p>
+          <p className="text-foreground/80">Loading assessment...</p>
         </div>
       </div>
     );
@@ -210,21 +210,21 @@ export default function CourseAssessment() {
 
   if (!assessment) {
     return (
-      <div className="min-h-screen bg-black text-white">
+      <div className="min-h-screen bg-background text-foreground">
         <Navigation />
         <div className="container mx-auto px-4 py-8 max-w-4xl pt-24">
-          <Card className="p-8 bg-white/5 backdrop-blur-md border-white/10 text-center">
+          <Card className="p-8 bg-card/50 backdrop-blur-md border-border text-center">
             <AlertCircle className="h-16 w-16 mx-auto mb-4 text-yellow-500" />
-            <h2 className="text-3xl font-bold mb-4 text-white">Assessment Not Ready</h2>
-            <p className="text-xl mb-2 text-white/80">
+            <h2 className="text-3xl font-bold mb-4 text-foreground">Assessment Not Ready</h2>
+            <p className="text-xl mb-2 text-foreground/80">
               No active assessment found for this course
             </p>
-            <p className="text-white/60 mb-6">
+            <p className="text-foreground/60 mb-6">
               The assessment questions are still being set up. Please check back later.
             </p>
             <Button
               onClick={() => navigate(`/courses/${id}/learn`)}
-              className="bg-white text-black hover:bg-white/90"
+              className="bg-foreground text-background hover:bg-foreground/90"
             >
               Back to Course
             </Button>
@@ -236,18 +236,18 @@ export default function CourseAssessment() {
 
   if (submitted) {
     return (
-      <div className="min-h-screen bg-black text-white">
+      <div className="min-h-screen bg-background text-foreground">
         <Navigation />
         <div className="container mx-auto px-4 py-8 max-w-4xl pt-24">
-          <Card className="p-8 bg-white/5 backdrop-blur-md border-white/10 text-center">
+          <Card className="p-8 bg-card/50 backdrop-blur-md border-border text-center">
             <CheckCircle2 className="h-16 w-16 mx-auto mb-4 text-green-500" />
-            <h2 className="text-3xl font-bold mb-4 text-white">Assessment Submitted!</h2>
-            <p className="text-white/80 mb-6">
+            <h2 className="text-3xl font-bold mb-4 text-foreground">Assessment Submitted!</h2>
+            <p className="text-foreground/80 mb-6">
               Your project submission has been received successfully.
             </p>
             <Button
               onClick={() => navigate(`/courses/${id}/learn`)}
-              className="bg-white text-black hover:bg-white/90"
+              className="bg-foreground text-background hover:bg-foreground/90"
             >
               Back to Course
             </Button>
@@ -260,34 +260,34 @@ export default function CourseAssessment() {
   // Show start screen if not started
   if (!started) {
     return (
-      <div className="min-h-screen bg-black text-white">
+      <div className="min-h-screen bg-background text-foreground">
         <Navigation />
         <div className="container mx-auto px-4 py-8 max-w-4xl pt-24">
-          <Card className="p-8 bg-white/5 backdrop-blur-md border-white/10">
+          <Card className="p-8 bg-card/50 backdrop-blur-md border-border">
             <div className="text-center mb-6">
               <FileText className="h-16 w-16 mx-auto mb-4 text-primary" />
-              <h1 className="text-3xl font-bold mb-2 text-white">{assessment.title}</h1>
+              <h1 className="text-3xl font-bold mb-2 text-foreground">{assessment.title}</h1>
               {assessment.description && (
-                <p className="text-white/70 text-lg mb-4">{assessment.description}</p>
+                <p className="text-foreground/70 text-lg mb-4">{assessment.description}</p>
               )}
             </div>
 
             {assessment.instructions && (
-              <div className="mb-6 p-4 bg-white/5 rounded-lg border border-white/10">
-                <h3 className="font-semibold mb-2 text-white">Instructions</h3>
-                <p className="text-white/80 whitespace-pre-wrap">{assessment.instructions}</p>
+              <div className="mb-6 p-4 bg-card/50 rounded-lg border border-border">
+                <h3 className="font-semibold mb-2 text-foreground">Instructions</h3>
+                <p className="text-foreground/80 whitespace-pre-wrap">{assessment.instructions}</p>
               </div>
             )}
 
-            <div className="mb-6 p-4 bg-white/5 rounded-lg border border-white/10">
+            <div className="mb-6 p-4 bg-card/50 rounded-lg border border-border">
               <div className="flex items-center justify-center gap-2 mb-2">
                 <Clock className="h-5 w-5 text-primary" />
-                <span className="font-semibold text-white">Time Limit</span>
+                <span className="font-semibold text-foreground">Time Limit</span>
               </div>
               <p className="text-2xl font-bold text-primary">
                 {formatTime(assessment.timeLimit)}
               </p>
-              <p className="text-sm text-white/60 mt-2">
+              <p className="text-sm text-foreground/60 mt-2">
                 The timer will start when you click "Start Assessment"
               </p>
             </div>
@@ -303,7 +303,7 @@ export default function CourseAssessment() {
               <Button
                 variant="outline"
                 onClick={() => navigate(`/courses/${id}/learn`)}
-                className="flex-1 border-white/20 text-white hover:bg-white/10"
+                className="flex-1 border-border text-foreground hover:bg-foreground/10"
               >
                 Back to Course
               </Button>
@@ -324,16 +324,16 @@ export default function CourseAssessment() {
 
   // Show submission form
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-background text-foreground">
       <Navigation />
       <div className="container mx-auto px-4 py-8 max-w-4xl pt-24">
         {/* Header with Timer */}
         <div className="mb-6">
           <div className="flex items-center justify-between mb-4">
-            <h1 className="text-2xl font-bold text-white">{assessment.title}</h1>
+            <h1 className="text-2xl font-bold text-foreground">{assessment.title}</h1>
             <div className="flex items-center gap-2 bg-red-500/20 px-4 py-2 rounded-lg border border-red-500/30">
               <Clock className="h-4 w-4 text-red-400" />
-              <span className="font-mono text-white font-semibold">
+              <span className="font-mono text-foreground font-semibold">
                 {formatTime(timeRemaining)}
               </span>
             </div>
@@ -349,13 +349,13 @@ export default function CourseAssessment() {
         </div>
 
         {/* Submission Form */}
-        <Card className="p-6 bg-white/5 backdrop-blur-md border-white/10 mb-6">
-          <h2 className="text-xl font-semibold mb-6 text-white">Project Submission</h2>
+        <Card className="p-6 bg-card/50 backdrop-blur-md border-border mb-6">
+          <h2 className="text-xl font-semibold mb-6 text-foreground">Project Submission</h2>
 
           <div className="space-y-6">
             {/* Project Title */}
             <div>
-              <Label htmlFor="projectTitle" className="text-white">
+              <Label htmlFor="projectTitle" className="text-foreground">
                 Project Title *
               </Label>
               <Input
@@ -365,14 +365,14 @@ export default function CourseAssessment() {
                   setProjectData({ ...projectData, title: e.target.value })
                 }
                 placeholder="e.g., E-commerce Website"
-                className="bg-white/5 border-white/20 text-white mt-2"
+                className="bg-card/50 border-border text-foreground mt-2"
                 required
               />
             </div>
 
             {/* Project Description */}
             <div>
-              <Label htmlFor="projectDescription" className="text-white">
+              <Label htmlFor="projectDescription" className="text-foreground">
                 Project Description / Design *
               </Label>
               <Textarea
@@ -383,14 +383,14 @@ export default function CourseAssessment() {
                 }
                 placeholder="Describe your project, technologies used, features implemented, design decisions..."
                 rows={8}
-                className="bg-white/5 border-white/20 text-white mt-2"
+                className="bg-card/50 border-border text-foreground mt-2"
                 required
               />
             </div>
 
             {/* Deployed Link */}
             <div>
-              <Label htmlFor="deployedLink" className="text-white flex items-center gap-2">
+              <Label htmlFor="deployedLink" className="text-foreground flex items-center gap-2">
                 <ExternalLink className="h-4 w-4" />
                 Deployed Link (Vercel, Render, Netlify, etc.)
               </Label>
@@ -402,16 +402,16 @@ export default function CourseAssessment() {
                   setProjectData({ ...projectData, deployedLink: e.target.value })
                 }
                 placeholder="https://your-project.vercel.app"
-                className="bg-white/5 border-white/20 text-white mt-2"
+                className="bg-card/50 border-border text-foreground mt-2"
               />
-              <p className="text-xs text-white/60 mt-1">
+              <p className="text-xs text-foreground/60 mt-1">
                 Enter the URL where your project is deployed
               </p>
             </div>
 
             {/* GitHub Link */}
             <div>
-              <Label htmlFor="githubLink" className="text-white flex items-center gap-2">
+              <Label htmlFor="githubLink" className="text-foreground flex items-center gap-2">
                 <Code className="h-4 w-4" />
                 GitHub Repository Link
               </Label>
@@ -423,23 +423,23 @@ export default function CourseAssessment() {
                   setProjectData({ ...projectData, githubLink: e.target.value })
                 }
                 placeholder="https://github.com/username/repository"
-                className="bg-white/5 border-white/20 text-white mt-2"
+                className="bg-card/50 border-border text-foreground mt-2"
               />
-              <p className="text-xs text-white/60 mt-1">
+              <p className="text-xs text-foreground/60 mt-1">
                 Enter the URL to your GitHub repository
               </p>
             </div>
 
             {/* Custom Fields */}
             {assessment.customFields && assessment.customFields.length > 0 && (
-              <div className="border-t border-white/10 pt-6">
-                <h3 className="text-lg font-semibold mb-4 text-white">Additional Information</h3>
+              <div className="border-t border-border pt-6">
+                <h3 className="text-lg font-semibold mb-4 text-foreground">Additional Information</h3>
                 <div className="space-y-4">
                   {assessment.customFields
                     .sort((a, b) => a.order - b.order)
                     .map((field) => (
                       <div key={field.label}>
-                        <Label htmlFor={`custom-${field.label}`} className="text-white">
+                        <Label htmlFor={`custom-${field.label}`} className="text-foreground">
                           {field.label}
                           {field.required && <span className="text-red-400 ml-1">*</span>}
                         </Label>
@@ -457,7 +457,7 @@ export default function CourseAssessment() {
                               })
                             }
                             placeholder={field.placeholder || ""}
-                            className="bg-white/5 border-white/20 text-white mt-2"
+                            className="bg-card/50 border-border text-foreground mt-2"
                             required={field.required}
                             rows={4}
                           />
@@ -476,7 +476,7 @@ export default function CourseAssessment() {
                               })
                             }
                             placeholder={field.placeholder || ""}
-                            className="bg-white/5 border-white/20 text-white mt-2"
+                            className="bg-card/50 border-border text-foreground mt-2"
                             required={field.required}
                             min={field.validation?.min}
                             max={field.validation?.max}
@@ -495,7 +495,7 @@ export default function CourseAssessment() {
           <Button
             variant="outline"
             onClick={() => navigate(`/courses/${id}/learn`)}
-            className="border-white/20 text-white hover:bg-white/10"
+            className="border-border text-foreground hover:bg-foreground/10"
           >
             Cancel
           </Button>

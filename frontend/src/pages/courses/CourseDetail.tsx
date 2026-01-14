@@ -220,10 +220,10 @@ export default function CourseDetail() {
 
   if (!currentCourse) {
     return (
-      <div className="min-h-screen bg-black text-white">
+      <div className="min-h-screen bg-background text-foreground">
         <Navigation />
         <div className="container mx-auto px-4 py-8 text-center">
-          <p className="text-white/80">Loading course...</p>
+          <p className="text-foreground/80">Loading course...</p>
         </div>
       </div>
     );
@@ -241,14 +241,14 @@ export default function CourseDetail() {
   const descriptionTooLong = description.length > DESCRIPTION_MAX_LENGTH;
 
   return (
-    <div className="min-h-screen bg-black text-white page-transition">
+    <div className="min-h-screen bg-background text-foreground page-transition">
       <Navigation />
 
       <div className="container mx-auto px-4 py-8 max-w-7xl pt-24">
         {/* Hero Section */}
         <div className="mb-8">
           <div className="grid md:grid-cols-2 gap-4">
-            <div className="md:h-full min-h-[400px] md:min-h-0 bg-white/5 rounded-lg overflow-hidden border border-white/10">
+            <div className="md:h-full min-h-[400px] md:min-h-0 bg-card/50 rounded-lg overflow-hidden border border-border">
               {currentCourse.thumbnail ? (
                 <img
                   src={currentCourse.thumbnail}
@@ -257,7 +257,7 @@ export default function CourseDetail() {
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
-                  <Play className="h-16 w-16 text-white/20" />
+                  <Play className="h-16 w-16 text-foreground/20" />
                 </div>
               )}
             </div>
@@ -265,17 +265,17 @@ export default function CourseDetail() {
               <div className="space-y-3 flex-1">
                 <div>
                   <div className="flex items-center gap-2 mb-2">
-                    <Badge variant="secondary" className="bg-white/10 text-white border-white/20">{currentCourse.category}</Badge>
-                    <Badge className="bg-white/10 text-white border-white/20">{currentCourse.difficulty}</Badge>
+                    <Badge variant="secondary" className="bg-foreground/10 text-foregroundborder-border">{currentCourse.category}</Badge>
+                    <Badge className="bg-foreground/10 text-foregroundborder-border">{currentCourse.difficulty}</Badge>
                   </div>
                   <div className="mb-2">
-                    <h1 className={`text-3xl md:text-4xl font-bold text-white leading-tight ${titleExpanded ? '' : 'line-clamp-2'}`}>
+                    <h1 className={`text-3xl md:text-4xl font-bold text-foregroundleading-tight ${titleExpanded ? '' : 'line-clamp-2'}`}>
                       {title}
                     </h1>
                     {titleTooLong && (
                       <button
                         onClick={() => setTitleExpanded(!titleExpanded)}
-                        className="mt-1 text-sm text-white/60 hover:text-white/80 flex items-center gap-1 transition-colors"
+                        className="mt-1 text-sm text-foreground/60 hover:text-foreground/80 flex items-center gap-1 transition-colors"
                       >
                         {titleExpanded ? (
                           <>
@@ -292,13 +292,13 @@ export default function CourseDetail() {
                     )}
                   </div>
                   <div>
-                    <p className={`text-base text-white/70 ${descriptionExpanded ? '' : 'line-clamp-2'}`}>
+                    <p className={`text-base text-foreground/70 ${descriptionExpanded ? '' : 'line-clamp-2'}`}>
                       {description}
                     </p>
                     {descriptionTooLong && (
                       <button
                         onClick={() => setDescriptionExpanded(!descriptionExpanded)}
-                        className="mt-1 text-sm text-white/60 hover:text-white/80 flex items-center gap-1 transition-colors"
+                        className="mt-1 text-sm text-foreground/60 hover:text-foreground/80 flex items-center gap-1 transition-colors"
                       >
                         {descriptionExpanded ? (
                           <>
@@ -319,21 +319,21 @@ export default function CourseDetail() {
                 <div className="flex items-center gap-3">
                   <Avatar className="h-9 w-9">
                     <AvatarImage src={currentCourse.instructor?.avatar} />
-                    <AvatarFallback className="bg-white/10 text-white">{currentCourse.instructor?.name?.[0]}</AvatarFallback>
+                    <AvatarFallback className="bg-foreground/10 text-foreground">{currentCourse.instructor?.name?.[0]}</AvatarFallback>
                   </Avatar>
                   <div>
-                    <p className="font-semibold text-white text-sm">{currentCourse.instructor?.name}</p>
-                    <p className="text-xs text-white/60">Instructor</p>
+                    <p className="font-semibold text-foregroundtext-sm">{currentCourse.instructor?.name}</p>
+                    <p className="text-xs text-foreground/60">Instructor</p>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-4 text-sm">
                   <div className="flex items-center gap-2">
                     <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
-                    <span className="font-medium text-white">{currentCourse.rating}</span>
-                    <span className="text-white/60">({currentCourse.reviewCount})</span>
+                    <span className="font-medium text-foreground">{currentCourse.rating}</span>
+                    <span className="text-foreground/60">({currentCourse.reviewCount})</span>
                   </div>
-                  <div className="flex items-center gap-2 text-white/60">
+                  <div className="flex items-center gap-2 text-foreground/60">
                     <Users className="h-4 w-4" />
                     <span>{currentCourse.studentCount} students</span>
                   </div>
@@ -341,11 +341,11 @@ export default function CourseDetail() {
               </div>
 
               {isEnrolled ? (
-                <div className="mt-3 pt-3 border-t border-white/10">
+                <div className="mt-3 pt-3 border-t border-border">
                   <div className="mb-3">
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className="text-sm font-semibold text-white">Your Progress</span>
-                      <span className="text-base font-bold text-white">{progress}%</span>
+                      <span className="text-sm font-semibold text-foreground">Your Progress</span>
+                      <span className="text-base font-bold text-foreground">{progress}%</span>
                     </div>
                     <Progress 
                       value={progress} 
@@ -354,7 +354,7 @@ export default function CourseDetail() {
                   </div>
                   <Link to={`/courses/${id}/learn`} className="block">
                     <Button 
-                      className="w-full bg-white text-black hover:bg-white/95 font-semibold shadow-lg hover:shadow-xl transition-all duration-200 h-11" 
+                      className="w-full bg-foreground text-background hover:bg-white/95 font-semibold shadow-lg hover:shadow-xl transition-all duration-200 h-11" 
                     >
                       Continue Learning
                       <ArrowRight className="h-4 w-4 ml-2" />
@@ -364,17 +364,17 @@ export default function CourseDetail() {
               ) : (
                 <div className="space-y-4">
                   <div>
-                    <p className="text-2xl font-bold mb-2 text-white">
+                    <p className="text-2xl font-bold mb-2 text-foreground">
                       ₹{formatPrice(currentCourse.price?.monthly || 0)}/month
                     </p>
                     {currentCourse.price?.quarterly && (
-                      <p className="text-sm text-white/60">
+                      <p className="text-sm text-foreground/60">
                         Or ₹{formatPrice(currentCourse.price.quarterly)}/quarter (Save 10%)
                       </p>
                     )}
                   </div>
                   <Link to={`/courses/${id}/subscribe`}>
-                    <Button className="w-full bg-white text-black hover:bg-white/90 border-2 border-white" size="lg">
+                    <Button className="w-full bg-foreground text-background hover:bg-foreground/90 border-2 border-foreground" size="lg">
                       Enroll Now
                     </Button>
                   </Link>
@@ -392,17 +392,17 @@ export default function CourseDetail() {
           </TabsList>
 
           <TabsContent value="curriculum" className="mt-6">
-            <Card className="p-6 bg-white/5 backdrop-blur-md border-white/10">
+            <Card className="p-6 bg-card/50 backdrop-blur-md border-border">
               {loadingCurriculum ? (
                 <div className="text-center py-12">
-                  <p className="text-white/60">Loading curriculum...</p>
+                  <p className="text-foreground/60">Loading curriculum...</p>
                 </div>
               ) : curriculumVideos.length > 0 ? (
                 <div className="space-y-4">
                   <div className="flex items-center gap-3 mb-4">
-                    <BookOpen className="h-5 w-5 text-white" />
-                    <h3 className="font-semibold text-lg text-white">Course Content</h3>
-                    <span className="text-sm text-white/60 ml-auto">
+                    <BookOpen className="h-5 w-5 text-foreground" />
+                    <h3 className="font-semibold text-lg text-foreground">Course Content</h3>
+                    <span className="text-sm text-foreground/60 ml-auto">
                       {curriculumPagination.total} {curriculumPagination.total === 1 ? 'lesson' : 'lessons'}
                     </span>
                   </div>
@@ -410,20 +410,20 @@ export default function CourseDetail() {
                     {curriculumVideos.map((video: any, index: number) => (
                       <div
                         key={video.videoId || index}
-                        className="flex items-center gap-3 text-sm p-2 rounded-lg hover:bg-white/5 transition-colors"
+                        className="flex items-center gap-3 text-sm p-2 rounded-lg hover:bg-card/50 transition-colors"
                       >
                         {video.completed ? (
                           <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />
                         ) : (
-                          <div className="h-5 w-5 rounded-full border-2 border-white/40 flex items-center justify-center flex-shrink-0">
-                            <Play className="h-3 w-3 text-white/60 ml-0.5" />
+                          <div className="h-5 w-5 rounded-full border-2 border-foreground/40 flex items-center justify-center flex-shrink-0">
+                            <Play className="h-3 w-3 text-foreground/60 ml-0.5" />
                           </div>
                         )}
-                        <span className="flex-1 text-white/80">
+                        <span className="flex-1 text-foreground/80">
                           {(curriculumPage - 1) * curriculumPagination.limit + index + 1}. {video.title}
                         </span>
                         {video.duration && (
-                          <span className="text-white/60 flex items-center gap-1">
+                          <span className="text-foreground/60 flex items-center gap-1">
                             <Clock className="h-4 w-4" />
                             {Math.round(video.duration / 60)} min
                           </span>
@@ -433,8 +433,8 @@ export default function CourseDetail() {
                   </div>
                   {/* Curriculum Pagination */}
                   {curriculumPagination.pages > 1 && (
-                    <div className="flex items-center justify-between mt-6 pt-6 border-t border-white/10">
-                      <div className="text-sm text-white/60">
+                    <div className="flex items-center justify-between mt-6 pt-6 border-t border-border">
+                      <div className="text-sm text-foreground/60">
                         Page {curriculumPagination.page} of {curriculumPagination.pages}
                       </div>
                       <div className="flex items-center gap-2">
@@ -443,7 +443,7 @@ export default function CourseDetail() {
                           size="sm"
                           onClick={() => setCurriculumPage((p) => Math.max(1, p - 1))}
                           disabled={curriculumPage === 1}
-                          className="border-white/20 text-white hover:bg-white/10"
+                          className="border-border text-foregroundhover:bg-foreground/10"
                         >
                           <ChevronLeft className="h-4 w-4" />
                           Previous
@@ -453,7 +453,7 @@ export default function CourseDetail() {
                           size="sm"
                           onClick={() => setCurriculumPage((p) => Math.min(curriculumPagination.pages, p + 1))}
                           disabled={curriculumPage >= curriculumPagination.pages}
-                          className="border-white/20 text-white hover:bg-white/10"
+                          className="border-border text-foregroundhover:bg-foreground/10"
                         >
                           Next
                           <ChevronRight className="h-4 w-4" />
@@ -464,21 +464,21 @@ export default function CourseDetail() {
                 </div>
               ) : (
                 <div className="text-center py-12">
-                  <BookOpen className="h-16 w-16 text-white/20 mx-auto mb-4" />
-                  <p className="text-white/60 text-lg mb-2">No curriculum available</p>
-                  <p className="text-white/40 text-sm">Course content will be available soon</p>
+                  <BookOpen className="h-16 w-16 text-foreground/20 mx-auto mb-4" />
+                  <p className="text-foreground/60 text-lg mb-2">No curriculum available</p>
+                  <p className="text-foreground/40 text-sm">Course content will be available soon</p>
                 </div>
               )}
             </Card>
           </TabsContent>
 
           <TabsContent value="reviews" className="mt-6">
-            <Card className="p-6 bg-white/5 backdrop-blur-md border-white/10">
+            <Card className="p-6 bg-card/50 backdrop-blur-md border-border">
               <div className="space-y-6">
                 {/* Reviews Summary */}
-                <div className="flex items-center justify-between pb-6 border-b border-white/10">
+                <div className="flex items-center justify-between pb-6 border-b border-border">
                   <div className="text-center">
-                    <div className="text-4xl font-bold text-white mb-1">
+                    <div className="text-4xl font-bold text-foregroundmb-1">
                       {currentCourse.rating > 0 ? currentCourse.rating.toFixed(1) : '0.0'}
                     </div>
                     <div className="flex items-center gap-1 justify-center mb-1">
@@ -488,19 +488,19 @@ export default function CourseDetail() {
                           className={`h-5 w-5 ${
                             star <= Math.round(currentCourse.rating)
                               ? 'text-yellow-500 fill-yellow-500'
-                              : 'text-white/20'
+                              : 'text-foreground/20'
                           }`}
                         />
                       ))}
                     </div>
-                    <p className="text-sm text-white/60">
+                    <p className="text-sm text-foreground/60">
                       Based on {currentCourse.reviewCount} {currentCourse.reviewCount === 1 ? 'review' : 'reviews'}
                     </p>
                   </div>
                   {isEnrolled && !showReviewForm && (
                     <Button
                       onClick={() => setShowReviewForm(true)}
-                      className="bg-white text-black hover:bg-white/90"
+                      className="bg-foreground text-background hover:bg-foreground/90"
                     >
                       {userReview ? 'Edit Review' : 'Write a Review'}
                     </Button>
@@ -509,13 +509,13 @@ export default function CourseDetail() {
 
                 {/* Review Form */}
                 {showReviewForm && isEnrolled && (
-                  <Card className="p-6 bg-white/5 border-white/10">
-                    <h3 className="text-lg font-semibold text-white mb-4">
+                  <Card className="p-6 bg-card/50 border-border">
+                    <h3 className="text-lg font-semibold text-foregroundmb-4">
                       {userReview ? 'Edit Your Review' : 'Write a Review'}
                     </h3>
                     <div className="space-y-4">
                       <div>
-                        <label className="text-sm text-white/80 mb-2 block">Rating</label>
+                        <label className="text-sm text-foreground/80 mb-2 block">Rating</label>
                         <div className="flex items-center gap-2">
                           {[1, 2, 3, 4, 5].map((star) => (
                             <button
@@ -528,30 +528,30 @@ export default function CourseDetail() {
                                 className={`h-8 w-8 cursor-pointer transition-colors ${
                                   star <= reviewRating
                                     ? 'text-yellow-500 fill-yellow-500'
-                                    : 'text-white/20 hover:text-yellow-500/50'
+                                    : 'text-foreground/20 hover:text-yellow-500/50'
                                 }`}
                               />
                             </button>
                           ))}
-                          <span className="text-white/60 text-sm ml-2">{reviewRating} / 5</span>
+                          <span className="text-foreground/60 text-sm ml-2">{reviewRating} / 5</span>
                         </div>
                       </div>
                       <div>
-                        <label className="text-sm text-white/80 mb-2 block">Review (optional)</label>
+                        <label className="text-sm text-foreground/80 mb-2 block">Review (optional)</label>
                         <Textarea
                           value={reviewContent}
                           onChange={(e) => setReviewContent(e.target.value)}
                           placeholder="Share your thoughts about this course..."
-                          className="bg-black/50 border-white/20 text-white placeholder:text-white/40 min-h-[120px]"
+                          className="bg-black/50 border-border text-foreground placeholder:text-foreground/40 min-h-[120px]"
                           maxLength={2000}
                         />
-                        <p className="text-xs text-white/40 mt-1">{reviewContent.length} / 2000</p>
+                        <p className="text-xs text-foreground/40 mt-1">{reviewContent.length} / 2000</p>
                       </div>
                       <div className="flex items-center gap-2">
                         <Button
                           onClick={handleSubmitReview}
                           disabled={submittingReview || !reviewRating}
-                          className="bg-white text-black hover:bg-white/90"
+                          className="bg-foreground text-background hover:bg-foreground/90"
                         >
                           {submittingReview ? 'Submitting...' : userReview ? 'Update Review' : 'Submit Review'}
                         </Button>
@@ -567,7 +567,7 @@ export default function CourseDetail() {
                               setReviewContent("");
                             }
                           }}
-                          className="border-white/20 text-white hover:bg-white/10"
+                          className="border-border text-foregroundhover:bg-foreground/10"
                         >
                           Cancel
                         </Button>
@@ -579,22 +579,22 @@ export default function CourseDetail() {
                 {/* Reviews List */}
                 {loadingReviews ? (
                   <div className="text-center py-8">
-                    <p className="text-white/60">Loading reviews...</p>
+                    <p className="text-foreground/60">Loading reviews...</p>
                   </div>
                 ) : reviews.length > 0 ? (
                   <div className="space-y-4">
                     {reviews.map((review) => (
-                      <div key={review._id} className="pb-4 border-b border-white/10 last:border-0 last:pb-0">
+                      <div key={review._id} className="pb-4 border-b border-border last:border-0 last:pb-0">
                         <div className="flex items-start gap-4">
                           <Avatar className="h-10 w-10">
                             <AvatarImage src={review.author.avatar || review.author.googleGmailPhoto} />
-                            <AvatarFallback className="bg-white/10 text-white">
+                            <AvatarFallback className="bg-foreground/10 text-foreground">
                               {review.author.name?.[0] || review.author.username?.[0] || 'U'}
                             </AvatarFallback>
                           </Avatar>
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
-                              <p className="font-semibold text-white">
+                              <p className="font-semibold text-foreground">
                                 {review.author.name || review.author.username || 'Anonymous'}
                               </p>
                               <div className="flex items-center gap-1">
@@ -604,17 +604,17 @@ export default function CourseDetail() {
                                     className={`h-4 w-4 ${
                                       star <= review.rating
                                         ? 'text-yellow-500 fill-yellow-500'
-                                        : 'text-white/20'
+                                        : 'text-foreground/20'
                                     }`}
                                   />
                                 ))}
                               </div>
-                              <span className="text-xs text-white/40">
+                              <span className="text-xs text-foreground/40">
                                 {new Date(review.createdAt).toLocaleDateString()}
                               </span>
                             </div>
                             {review.content && (
-                              <p className="text-white/80 text-sm mt-2">{review.content}</p>
+                              <p className="text-foreground/80 text-sm mt-2">{review.content}</p>
                             )}
                           </div>
                         </div>
@@ -622,8 +622,8 @@ export default function CourseDetail() {
                     ))}
                     {/* Reviews Pagination */}
                     {reviewsPagination.pages > 1 && (
-                      <div className="flex items-center justify-between mt-6 pt-6 border-t border-white/10">
-                        <div className="text-sm text-white/60">
+                      <div className="flex items-center justify-between mt-6 pt-6 border-t border-border">
+                        <div className="text-sm text-foreground/60">
                           Page {reviewsPagination.page} of {reviewsPagination.pages}
                         </div>
                         <div className="flex items-center gap-2">
@@ -632,7 +632,7 @@ export default function CourseDetail() {
                             size="sm"
                             onClick={() => setReviewsPage((p) => Math.max(1, p - 1))}
                             disabled={reviewsPage === 1}
-                            className="border-white/20 text-white hover:bg-white/10"
+                            className="border-border text-foregroundhover:bg-foreground/10"
                           >
                             <ChevronLeft className="h-4 w-4" />
                             Previous
@@ -642,7 +642,7 @@ export default function CourseDetail() {
                             size="sm"
                             onClick={() => setReviewsPage((p) => Math.min(reviewsPagination.pages, p + 1))}
                             disabled={reviewsPage >= reviewsPagination.pages}
-                            className="border-white/20 text-white hover:bg-white/10"
+                            className="border-border text-foregroundhover:bg-foreground/10"
                           >
                             Next
                             <ChevronRight className="h-4 w-4" />
@@ -653,9 +653,9 @@ export default function CourseDetail() {
                   </div>
                 ) : (
                   <div className="text-center py-8">
-                    <Star className="h-12 w-12 text-white/20 mx-auto mb-4" />
-                    <p className="text-white/60 mb-2">No reviews yet</p>
-                    <p className="text-white/40 text-sm">
+                    <Star className="h-12 w-12 text-foreground/20 mx-auto mb-4" />
+                    <p className="text-foreground/60 mb-2">No reviews yet</p>
+                    <p className="text-foreground/40 text-sm">
                       {isEnrolled
                         ? 'Be the first to review this course'
                         : 'Enroll to leave a review'}

@@ -94,22 +94,22 @@ export default function FollowingList() {
   const displayName = profileUser?.name || username || "User";
 
   return (
-    <div className="min-h-screen bg-black text-white page-transition">
+    <div className="min-h-screen bg-background text-foreground page-transition">
       <Navigation />
 
       <div className="container mx-auto px-4 py-8 max-w-6xl pt-24">
         <div className="mb-6">
           <Link
             to={isOwnProfile ? "/dashboard/student" : `/profile/${username}`}
-            className="inline-flex items-center gap-2 text-white/60 hover:text-white transition-colors mb-4"
+            className="inline-flex items-center gap-2 text-foreground/60 hover:text-foregroundtransition-colors mb-4"
           >
             <ArrowLeft className="h-4 w-4" />
             <span>Back to {isOwnProfile ? "Dashboard" : "Profile"}</span>
           </Link>
-          <h1 className="text-3xl font-bold text-white mb-2">
+          <h1 className="text-3xl font-bold text-foregroundmb-2">
             {isOwnProfile ? "People I'm" : `${displayName} is`} Following
           </h1>
-          <p className="text-white/60">
+          <p className="text-foreground/60">
             {pagination.total} {pagination.total === 1 ? "user" : "users"}
           </p>
         </div>
@@ -117,15 +117,15 @@ export default function FollowingList() {
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white mx-auto mb-4"></div>
-              <p className="text-white/80">Loading following...</p>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-bordermx-auto mb-4"></div>
+              <p className="text-foreground/80">Loading following...</p>
             </div>
           </div>
         ) : following.length === 0 ? (
-          <Card className="p-12 text-center bg-white/5 backdrop-blur-md border-white/10">
-            <UsersIcon className="h-12 w-12 mx-auto mb-4 text-white/40" />
-            <h3 className="text-lg font-semibold mb-2 text-white">Not following anyone yet</h3>
-            <p className="text-white/80">
+          <Card className="p-12 text-center bg-card/50 backdrop-blur-md border-border">
+            <UsersIcon className="h-12 w-12 mx-auto mb-4 text-foreground/40" />
+            <h3 className="text-lg font-semibold mb-2 text-foreground">Not following anyone yet</h3>
+            <p className="text-foreground/80">
               {isOwnProfile
                 ? "Start following other learners to see their updates in your feed"
                 : "This user is not following anyone yet"}
@@ -144,7 +144,7 @@ export default function FollowingList() {
                 <Button
                   onClick={handleLoadMore}
                   variant="outline"
-                  className="border-white/20 text-white hover:bg-white/10"
+                  className="border-border text-foregroundhover:bg-foreground/10"
                 >
                   Load More
                 </Button>

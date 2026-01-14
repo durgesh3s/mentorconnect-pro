@@ -158,7 +158,7 @@ export default function CompleteProfile() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-12 relative overflow-hidden page-transition bg-black pt-20">
+    <div className="min-h-screen flex items-center justify-center px-4 py-12 relative overflow-hidden page-transition bg-background pt-20">
       {/* Background Video */}
       <div className="fixed inset-0 -z-10 opacity-10">
         <video
@@ -169,20 +169,20 @@ export default function CompleteProfile() {
           className="w-full h-full object-cover"
         >
           <source src="https://videos.pexels.com/video-files/3045163/3045163-hd_1920_1080_30fps.mp4" type="video/mp4" />
-          <div className="absolute inset-0 bg-black" />
+          <div className="absolute inset-0 bg-background" />
         </video>
         <div className="absolute inset-0 bg-black/50" />
       </div>
 
-      <Card className="w-full max-w-2xl p-8 animate-fade-in-up bg-white/5 backdrop-blur-md border-white/10 relative z-10">
+      <Card className="w-full max-w-2xl p-8 animate-fade-in-up bg-card/50 backdrop-blur-md border-border relative z-10">
         <div className="text-center mb-8">
             <div className="flex items-center justify-center gap-2 mb-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/10 border border-white/20">
-                <GraduationCap className="h-7 w-7 text-white" />
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-foreground/10 border border-border">
+                <GraduationCap className="h-7 w-7 text-foreground" />
               </div>
-              <span className="text-2xl font-bold text-white">Complete Your Profile</span>
+              <span className="text-2xl font-bold text-foreground">Complete Your Profile</span>
             </div>
-          <p className="text-white/80">Fill in your details to get started</p>
+          <p className="text-foreground/80">Fill in your details to get started</p>
         </div>
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
@@ -200,7 +200,7 @@ export default function CompleteProfile() {
                 variant="outline" 
                 size="sm" 
                 disabled={uploading} 
-                className="border-white/20 text-white hover:bg-white/10"
+                className="border-border text-foregroundhover:bg-foreground/10"
                 onClick={() => fileInputRef.current?.click()}
               >
                 {uploading ? (
@@ -225,20 +225,20 @@ export default function CompleteProfile() {
 
           {/* Username */}
           <div className="space-y-2">
-            <Label htmlFor="username" className="text-white">Username</Label>
+            <Label htmlFor="username" className="text-foreground">Username</Label>
             <div className="relative">
               <Input
                 id="username"
                 {...register("username")}
                 placeholder="johndoe"
-                className={`bg-white/5 border-white/20 text-white placeholder:text-white/40 ${errors.username ? "border-destructive" : ""}`}
+                className={`bg-card/50 border-border text-foreground placeholder:text-foreground/40 ${errors.username ? "border-destructive" : ""}`}
               />
               {username && username.length >= 3 && (
                 <div className="absolute right-3 top-1/2 -translate-y-1/2">
                   {checkingUsername ? (
-                    <Loader2 className="h-4 w-4 animate-spin text-white/60" />
+                    <Loader2 className="h-4 w-4 animate-spin text-foreground/60" />
                   ) : usernameAvailable === true ? (
-                    <CheckCircle2 className="h-4 w-4 text-white" />
+                    <CheckCircle2 className="h-4 w-4 text-foreground" />
                   ) : usernameAvailable === false ? (
                     <X className="h-4 w-4 text-destructive" />
                   ) : null}
@@ -255,49 +255,49 @@ export default function CompleteProfile() {
 
           {/* Name */}
           <div className="space-y-2">
-            <Label htmlFor="name" className="text-white">Full Name</Label>
+            <Label htmlFor="name" className="text-foreground">Full Name</Label>
             <Input
               id="name"
               {...register("name")}
               placeholder="John Doe"
-              className={`bg-white/5 border-white/20 text-white placeholder:text-white/40 ${errors.name ? "border-destructive" : ""}`}
+              className={`bg-card/50 border-border text-foreground placeholder:text-foreground/40 ${errors.name ? "border-destructive" : ""}`}
             />
             {errors.name && <p className="text-sm text-destructive">{errors.name.message}</p>}
           </div>
 
           {/* Description */}
           <div className="space-y-2">
-            <Label htmlFor="description" className="text-white">Description *</Label>
+            <Label htmlFor="description" className="text-foreground">Description *</Label>
             <Textarea
               id="description"
               {...register("description")}
               placeholder="Tell us about yourself, your goals, and what you're looking for..."
               rows={4}
-              className={`bg-white/5 border-white/20 text-white placeholder:text-white/40 ${errors.description ? "border-destructive" : ""}`}
+              className={`bg-card/50 border-border text-foreground placeholder:text-foreground/40 ${errors.description ? "border-destructive" : ""}`}
             />
             {errors.description && <p className="text-sm text-destructive">{errors.description.message}</p>}
           </div>
 
           {/* Phone */}
           <div className="space-y-2">
-            <Label htmlFor="phone" className="text-white">Phone Number *</Label>
+            <Label htmlFor="phone" className="text-foreground">Phone Number *</Label>
             <Input
               id="phone"
               {...register("phone")}
               placeholder="+1234567890"
-              className={`bg-white/5 border-white/20 text-white placeholder:text-white/40 ${errors.phone ? "border-destructive" : ""}`}
+              className={`bg-card/50 border-border text-foreground placeholder:text-foreground/40 ${errors.phone ? "border-destructive" : ""}`}
             />
             {errors.phone && <p className="text-sm text-destructive">{errors.phone.message}</p>}
           </div>
 
           {/* Education */}
           <div className="space-y-2">
-            <Label htmlFor="education" className="text-white">Education Level *</Label>
+            <Label htmlFor="education" className="text-foreground">Education Level *</Label>
             <Select
               value={watch("education")}
               onValueChange={(value) => setValue("education", value as "high" | "secondary" | "graduation")}
             >
-              <SelectTrigger className={`bg-white/5 border-white/20 text-white ${errors.education ? "border-destructive" : ""}`}>
+              <SelectTrigger className={`bg-card/50 border-border text-foreground${errors.education ? "border-destructive" : ""}`}>
                 <SelectValue placeholder="Select education level" />
               </SelectTrigger>
               <SelectContent>
@@ -311,19 +311,19 @@ export default function CompleteProfile() {
 
           {/* Location */}
           <div className="space-y-2">
-            <Label htmlFor="location" className="text-white">Location *</Label>
+            <Label htmlFor="location" className="text-foreground">Location *</Label>
             <Input
               id="location"
               {...register("location")}
               placeholder="City, Country"
-              className={`bg-white/5 border-white/20 text-white placeholder:text-white/40 ${errors.location ? "border-destructive" : ""}`}
+              className={`bg-card/50 border-border text-foreground placeholder:text-foreground/40 ${errors.location ? "border-destructive" : ""}`}
             />
             {errors.location && <p className="text-sm text-destructive">{errors.location.message}</p>}
           </div>
 
           {/* Fields of Interest */}
           <div className="space-y-2">
-            <Label htmlFor="fieldsOfInterest" className="text-white">Fields of Interest *</Label>
+            <Label htmlFor="fieldsOfInterest" className="text-foreground">Fields of Interest *</Label>
             <div className="flex gap-2">
               <Input
                 id="fieldsOfInterest"
@@ -336,14 +336,14 @@ export default function CompleteProfile() {
                   }
                 }}
                 placeholder="e.g., Datascience, Development (press Enter to add)"
-                className="bg-white/5 border-white/20 text-white placeholder:text-white/40"
+                className="bg-card/50 border-border text-foreground placeholder:text-foreground/40"
               />
               <Button
                 type="button"
                 onClick={addInterest}
                 variant="outline"
                 size="sm"
-                className="border-white/20 text-white hover:bg-white/10"
+                className="border-border text-foregroundhover:bg-foreground/10"
               >
                 <Plus className="h-4 w-4" />
               </Button>
@@ -354,7 +354,7 @@ export default function CompleteProfile() {
                   <Badge
                     key={index}
                     variant="secondary"
-                    className="bg-white/10 text-white border-white/20"
+                    className="bg-foreground/10 text-foregroundborder-border"
                   >
                     {interest}
                     <button
@@ -376,7 +376,7 @@ export default function CompleteProfile() {
           {/* Submit */}
           <Button
             type="submit"
-            className="w-full bg-white text-black hover:bg-white/90 border-2 border-white"
+            className="w-full bg-foreground text-background hover:bg-foreground/90 border-2 border-foreground"
             disabled={isSubmitting || usernameAvailable === false}
             size="lg"
           >

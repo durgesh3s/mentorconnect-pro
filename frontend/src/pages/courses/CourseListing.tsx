@@ -71,14 +71,14 @@ export default function CourseListing() {
   }, [category, difficulty, sortBy, searchQuery, setCourses]);
 
   return (
-    <div className="min-h-screen bg-black text-white page-transition">
+    <div className="min-h-screen bg-background text-foreground page-transition">
       <Navigation />
 
       <div className="container mx-auto px-4 py-8 max-w-7xl pt-24">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2 text-white">Browse Courses</h1>
-          <p className="text-white/80">Find the perfect course for your learning journey</p>
+          <h1 className="text-3xl font-bold mb-2 text-foreground">Browse Courses</h1>
+          <p className="text-foreground/80">Find the perfect course for your learning journey</p>
         </div>
 
         {/* Filters */}
@@ -152,15 +152,15 @@ export default function CourseListing() {
           viewMode === "grid" ? (
             <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[...Array(6)].map((_, i) => (
-                <Card key={i} className="overflow-hidden bg-white/5 backdrop-blur-md border-white/10">
-                  <Skeleton className="aspect-video w-full bg-white/10" />
+                <Card key={i} className="overflow-hidden bg-card/50 backdrop-blur-md border-border">
+                  <Skeleton className="aspect-video w-full bg-foreground/10" />
                   <div className="p-6">
                     <div className="flex items-start justify-between mb-2">
-                      <Skeleton className="h-5 w-20 bg-white/10" />
-                      <Skeleton className="h-5 w-16 bg-white/10" />
+                      <Skeleton className="h-5 w-20 bg-foreground/10" />
+                      <Skeleton className="h-5 w-16 bg-foreground/10" />
                     </div>
-                    <Skeleton className="h-6 w-full mb-4 bg-white/10" />
-                    <Skeleton className="h-4 w-3/4 bg-white/10" />
+                    <Skeleton className="h-6 w-full mb-4 bg-foreground/10" />
+                    <Skeleton className="h-4 w-3/4 bg-foreground/10" />
                   </div>
                 </Card>
               ))}
@@ -168,13 +168,13 @@ export default function CourseListing() {
           ) : (
             <div className="space-y-4">
               {[...Array(6)].map((_, i) => (
-                <Card key={i} className="bg-white/5 backdrop-blur-md border-white/10">
+                <Card key={i} className="bg-card/50 backdrop-blur-md border-border">
                   <div className="flex gap-6 p-6">
-                    <Skeleton className="w-64 aspect-video rounded-lg bg-white/10" />
+                    <Skeleton className="w-64 aspect-video rounded-lg bg-foreground/10" />
                     <div className="flex-1 space-y-4">
-                      <Skeleton className="h-6 w-3/4 bg-white/10" />
-                      <Skeleton className="h-4 w-full bg-white/10" />
-                      <Skeleton className="h-4 w-2/3 bg-white/10" />
+                      <Skeleton className="h-6 w-3/4 bg-foreground/10" />
+                      <Skeleton className="h-4 w-full bg-foreground/10" />
+                      <Skeleton className="h-4 w-2/3 bg-foreground/10" />
                     </div>
                   </div>
                 </Card>
@@ -182,15 +182,15 @@ export default function CourseListing() {
             </div>
           )
         ) : !courses || courses.length === 0 ? (
-          <Card className="p-12 text-center bg-white/5 backdrop-blur-md border-white/10">
-            <p className="text-white/80">No courses found. Try adjusting your filters.</p>
+          <Card className="p-12 text-center bg-card/50 backdrop-blur-md border-border">
+            <p className="text-foreground/80">No courses found. Try adjusting your filters.</p>
           </Card>
         ) : viewMode === "grid" ? (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {courses.map((course) => (
-              <Card key={course.id} className="overflow-hidden cred-hover bg-white/5 backdrop-blur-md border-white/10">
+              <Card key={course.id} className="overflow-hidden cred-hover bg-card/50 backdrop-blur-md border-border">
                 <Link to={`/courses/${course.id}`}>
-                  <div className="aspect-video bg-white/5 relative">
+                  <div className="aspect-video bg-card/50 relative">
                     {course.thumbnail && (
                       <img
                         src={course.thumbnail}
@@ -201,21 +201,21 @@ export default function CourseListing() {
                   </div>
                   <div className="p-6">
                     <div className="flex items-start justify-between mb-2">
-                      <Badge variant="secondary" className="bg-white/10 text-white border-white/20">{course.category}</Badge>
-                      <Badge className="bg-white/10 text-white border-white/20">{course.difficulty}</Badge>
+                      <Badge variant="secondary" className="bg-foreground/10 text-foregroundborder-border">{course.category}</Badge>
+                      <Badge className="bg-foreground/10 text-foregroundborder-border">{course.difficulty}</Badge>
                     </div>
-                    <h3 className="font-semibold mb-2 line-clamp-2 text-white">{course.title}</h3>
+                    <h3 className="font-semibold mb-2 line-clamp-2 text-foreground">{course.title}</h3>
                     <div className="flex items-center gap-2 mb-4">
                       <Avatar className="h-6 w-6">
                         <AvatarImage src={course.instructor?.avatar} />
-                        <AvatarFallback className="bg-white/10 text-white text-xs">{course.instructor?.name?.[0]}</AvatarFallback>
+                        <AvatarFallback className="bg-foreground/10 text-foregroundtext-xs">{course.instructor?.name?.[0]}</AvatarFallback>
                       </Avatar>
-                      <span className="text-sm text-white/60">{course.instructor?.name}</span>
+                      <span className="text-sm text-foreground/60">{course.instructor?.name}</span>
                     </div>
                     <div className="flex items-center justify-between">
                       <div>
-                        <span className="text-lg font-bold text-white">₹{formatPrice(course.price.monthly)}/mo</span>
-                        <span className="text-sm text-white/60 ml-2">
+                        <span className="text-lg font-bold text-foreground">₹{formatPrice(course.price.monthly)}/mo</span>
+                        <span className="text-sm text-foreground/60 ml-2">
                           {course.rating} ⭐ ({course.reviewCount})
                         </span>
                       </div>
@@ -228,10 +228,10 @@ export default function CourseListing() {
         ) : (
           <div className="space-y-4">
             {courses.map((course) => (
-              <Card key={course.id} className="cred-hover bg-white/5 backdrop-blur-md border-white/10">
+              <Card key={course.id} className="cred-hover bg-card/50 backdrop-blur-md border-border">
                 <Link to={`/courses/${course.id}`}>
                   <div className="flex gap-6 p-6">
-                    <div className="w-64 aspect-video bg-white/5 rounded-lg flex-shrink-0">
+                    <div className="w-64 aspect-video bg-card/50 rounded-lg flex-shrink-0">
                       {course.thumbnail && (
                         <img
                           src={course.thumbnail}
@@ -244,11 +244,11 @@ export default function CourseListing() {
                       <div className="flex items-start justify-between mb-2">
                         <div>
                           <div className="flex items-center gap-2 mb-2">
-                            <Badge variant="secondary" className="bg-white/10 text-white border-white/20">{course.category}</Badge>
-                            <Badge className="bg-white/10 text-white border-white/20">{course.difficulty}</Badge>
+                            <Badge variant="secondary" className="bg-foreground/10 text-foregroundborder-border">{course.category}</Badge>
+                            <Badge className="bg-foreground/10 text-foregroundborder-border">{course.difficulty}</Badge>
                           </div>
-                          <h3 className="text-xl font-semibold mb-2 text-white">{course.title}</h3>
-                          <p className="text-white/70 line-clamp-2">{course.description}</p>
+                          <h3 className="text-xl font-semibold mb-2 text-foreground">{course.title}</h3>
+                          <p className="text-foreground/70 line-clamp-2">{course.description}</p>
                         </div>
                       </div>
                       <div className="flex items-center justify-between mt-4">
@@ -256,21 +256,21 @@ export default function CourseListing() {
                           <div className="flex items-center gap-2">
                             <Avatar className="h-6 w-6">
                               <AvatarImage src={course.instructor?.avatar} />
-                              <AvatarFallback className="bg-white/10 text-white text-xs">{course.instructor?.name?.[0]}</AvatarFallback>
+                              <AvatarFallback className="bg-foreground/10 text-foregroundtext-xs">{course.instructor?.name?.[0]}</AvatarFallback>
                             </Avatar>
-                            <span className="text-sm text-white/60">
+                            <span className="text-sm text-foreground/60">
                               {course.instructor?.name}
                             </span>
                           </div>
-                          <span className="text-sm text-white/60">
+                          <span className="text-sm text-foreground/60">
                             {course.studentCount} students
                           </span>
-                          <span className="text-sm text-white/60">
+                          <span className="text-sm text-foreground/60">
                             {course.rating} ⭐ ({course.reviewCount})
                           </span>
                         </div>
                         <div className="text-right">
-                          <p className="text-xl font-bold text-white">₹{formatPrice(course.price.monthly)}/mo</p>
+                          <p className="text-xl font-bold text-foreground">₹{formatPrice(course.price.monthly)}/mo</p>
                         </div>
                       </div>
                     </div>

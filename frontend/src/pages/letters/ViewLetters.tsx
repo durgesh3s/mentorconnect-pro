@@ -106,44 +106,44 @@ export default function ViewLetters() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-black text-white">
+      <div className="min-h-screen bg-background text-foreground">
         <Navigation />
         <div className="container mx-auto px-4 py-8 text-center pt-24">
-          <p className="text-white/80">Loading letters...</p>
+          <p className="text-foreground/80">Loading letters...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-background text-foreground">
       <Navigation />
       <div className="container mx-auto px-4 py-8 max-w-6xl pt-24">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2 text-white">My Letters</h1>
-          <p className="text-white/80">View and download your letters</p>
+          <h1 className="text-3xl font-bold mb-2 text-foreground">My Letters</h1>
+          <p className="text-foreground/80">View and download your letters</p>
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
-          <TabsList className="bg-white/5 border-white/10">
-            <TabsTrigger value="all" className="text-white data-[state=active]:bg-white data-[state=active]:text-black">
+          <TabsList className="bg-card/50 border-border">
+            <TabsTrigger value="all" className="text-foreground data-[state=active]:bg-foreground data-[state=active]:text-background">
               All
             </TabsTrigger>
             <TabsTrigger
               value="letter_of_intent"
-              className="text-white data-[state=active]:bg-white data-[state=active]:text-black"
+              className="text-foreground data-[state=active]:bg-foreground data-[state=active]:text-background"
             >
               Letter of Intent
             </TabsTrigger>
             <TabsTrigger
               value="letter_of_appreciation"
-              className="text-white data-[state=active]:bg-white data-[state=active]:text-black"
+              className="text-foreground data-[state=active]:bg-foreground data-[state=active]:text-background"
             >
               Letter of Appreciation
             </TabsTrigger>
             <TabsTrigger
               value="offer_letter"
-              className="text-white data-[state=active]:bg-white data-[state=active]:text-black"
+              className="text-foreground data-[state=active]:bg-foreground data-[state=active]:text-background"
             >
               Offer Letter
             </TabsTrigger>
@@ -151,25 +151,25 @@ export default function ViewLetters() {
         </Tabs>
 
         {filteredLetters.length === 0 ? (
-          <Card className="p-12 text-center bg-white/5 backdrop-blur-md border-white/10">
-            <FileText className="h-12 w-12 mx-auto mb-4 text-white/60" />
-            <h3 className="text-lg font-semibold mb-2 text-white">No letters available</h3>
-            <p className="text-white/80">
+          <Card className="p-12 text-center bg-card/50 backdrop-blur-md border-border">
+            <FileText className="h-12 w-12 mx-auto mb-4 text-foreground/60" />
+            <h3 className="text-lg font-semibold mb-2 text-foreground">No letters available</h3>
+            <p className="text-foreground/80">
               You haven't received any letters yet. Complete courses and interviews to receive letters.
             </p>
           </Card>
         ) : (
           <div className="grid md:grid-cols-2 gap-6">
             {filteredLetters.map((letter) => (
-              <Card key={letter.id} className="p-6 bg-white/5 backdrop-blur-md border-white/10">
+              <Card key={letter.id} className="p-6 bg-card/50 backdrop-blur-md border-border">
                 <div className="flex items-start gap-4 mb-4">
-                  <div className="h-12 w-12 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center">
+                  <div className="h-12 w-12 rounded-lg bg-foreground/10 border border-border flex items-center justify-center">
                     {getLetterIcon(letter.type)}
                   </div>
                   <div className="flex-1">
-                    <h3 className="text-xl font-semibold mb-2 text-white">{getLetterTitle(letter.type)}</h3>
-                    <p className="text-sm text-white/60 mb-2">Course: {letter.courseTitle}</p>
-                    <p className="text-sm text-white/60">
+                    <h3 className="text-xl font-semibold mb-2 text-foreground">{getLetterTitle(letter.type)}</h3>
+                    <p className="text-sm text-foreground/60 mb-2">Course: {letter.courseTitle}</p>
+                    <p className="text-sm text-foreground/60">
                       Issued: {new Date(letter.issuedAt).toLocaleDateString()}
                     </p>
                   </div>
@@ -177,8 +177,8 @@ export default function ViewLetters() {
                 </div>
 
                 {letter.content && (
-                  <div className="mb-4 p-4 bg-white/5 rounded-lg border border-white/10">
-                    <p className="text-white/80 text-sm line-clamp-3">{letter.content}</p>
+                  <div className="mb-4 p-4 bg-card/50 rounded-lg border border-border">
+                    <p className="text-foreground/80 text-sm line-clamp-3">{letter.content}</p>
                   </div>
                 )}
 
@@ -187,7 +187,7 @@ export default function ViewLetters() {
                     onClick={() => handleDownload(letter.id)}
                     variant="outline"
                     size="sm"
-                    className="flex-1 border-white/20 text-white hover:bg-white/10"
+                    className="flex-1 border-border text-foregroundhover:bg-foreground/10"
                   >
                     <Download className="h-4 w-4 mr-2" />
                     Download
@@ -195,7 +195,7 @@ export default function ViewLetters() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="border-white/20 text-white hover:bg-white/10"
+                    className="border-border text-foregroundhover:bg-foreground/10"
                   >
                     <Mail className="h-4 w-4 mr-2" />
                     Email

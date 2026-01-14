@@ -303,12 +303,12 @@ export default function AssessmentManagement() {
               variant="ghost"
               size="icon"
               onClick={() => navigate("/admin")}
-              className="hover:bg-white/10"
+              className="hover:bg-foreground/10"
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div>
-              <h1 className="text-3xl font-bold text-white">Assessment Management</h1>
+              <h1 className="text-3xl font-bold text-foreground">Assessment Management</h1>
               <p className="text-muted-foreground mt-1">Create and manage course assessments</p>
             </div>
           </div>
@@ -323,9 +323,9 @@ export default function AssessmentManagement() {
             <p className="text-muted-foreground">Loading assessments...</p>
           </div>
         ) : assessments.length === 0 ? (
-          <Card className="p-12 text-center bg-white/5 border-white/10">
+          <Card className="p-12 text-center bg-card/50 border-border">
             <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-            <h3 className="text-xl font-semibold mb-2 text-white">No assessments yet</h3>
+            <h3 className="text-xl font-semibold mb-2 text-foreground">No assessments yet</h3>
             <p className="text-muted-foreground mb-4">
               Create your first assessment to get started
             </p>
@@ -334,12 +334,12 @@ export default function AssessmentManagement() {
         ) : (
           <div className="space-y-4">
             {assessments.map((assessment) => (
-              <Card key={assessment._id} className="bg-white/5 border-white/10">
+              <Card key={assessment._id} className="bg-card/50 border-border">
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-2">
-                        <CardTitle className="text-white">{assessment.title}</CardTitle>
+                        <CardTitle className="text-foreground">{assessment.title}</CardTitle>
                         {assessment.isActive ? (
                           <Badge className="bg-green-500/20 text-green-400 border-green-500/30">
                             Active
@@ -348,11 +348,11 @@ export default function AssessmentManagement() {
                           <Badge variant="secondary">Inactive</Badge>
                         )}
                       </div>
-                      <CardDescription className="text-white/70">
+                      <CardDescription className="text-foreground/70">
                         Course: {assessment.courseId?.title || "Unknown"}
                       </CardDescription>
                       {assessment.description && (
-                        <p className="text-sm text-white/60 mt-2">{assessment.description}</p>
+                        <p className="text-sm text-foreground/60 mt-2">{assessment.description}</p>
                       )}
                     </div>
                     <div className="flex items-center gap-2">
@@ -399,26 +399,26 @@ export default function AssessmentManagement() {
                   <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
                     <div>
                       <p className="text-muted-foreground">Time Limit</p>
-                      <p className="text-white font-semibold">
+                      <p className="text-foreground font-semibold">
                         <Clock className="h-3 w-3 inline mr-1" />
                         {formatTime(assessment.timeLimit)}
                       </p>
                     </div>
                     <div>
                       <p className="text-muted-foreground">Custom Fields</p>
-                      <p className="text-white font-semibold">
+                      <p className="text-foreground font-semibold">
                         {assessment.customFields?.length || 0}
                       </p>
                     </div>
                     <div>
                       <p className="text-muted-foreground">Submissions</p>
-                      <p className="text-white font-semibold">
+                      <p className="text-foreground font-semibold">
                         {assessment.submissions?.length || 0}
                       </p>
                     </div>
                   </div>
                 </CardContent>
-                <div className="border-t border-white/10 p-4">
+                <div className="border-t border-border p-4">
                   <Link to={`/admin/assessments/${assessment._id}/submissions`}>
                     <Button variant="outline" size="sm" className="w-full">
                       <Eye className="h-4 w-4 mr-2" />
@@ -550,9 +550,9 @@ export default function AssessmentManagement() {
 
                 <div className="space-y-4">
                   {formData.customFields.map((field, index) => (
-                    <Card key={index} className="p-4 bg-white/5 border-white/10">
+                    <Card key={index} className="p-4 bg-card/50 border-border">
                       <div className="flex items-start justify-between mb-4">
-                        <h4 className="font-semibold text-white">Custom Field {index + 1}</h4>
+                        <h4 className="font-semibold text-foreground">Custom Field {index + 1}</h4>
                         <Button
                           variant="ghost"
                           size="icon"

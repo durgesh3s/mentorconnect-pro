@@ -188,12 +188,12 @@ export default function AssessmentSubmissions() {
               variant="ghost"
               size="icon"
               onClick={() => navigate("/admin/assessments")}
-              className="hover:bg-white/10"
+              className="hover:bg-foreground/10"
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <div className="flex-1">
-              <h1 className="text-3xl font-bold text-white">Assessment Submissions</h1>
+              <h1 className="text-3xl font-bold text-foreground">Assessment Submissions</h1>
               <p className="text-muted-foreground mt-1">
                 {assessment.title} - {assessment.courseId?.title || "Unknown Course"}
               </p>
@@ -206,9 +206,9 @@ export default function AssessmentSubmissions() {
 
         {/* Submissions List */}
         {assessment.submissions.length === 0 ? (
-          <Card className="p-12 text-center bg-white/5 border-white/10">
+          <Card className="p-12 text-center bg-card/50 border-border">
             <FileText className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-            <h3 className="text-xl font-semibold mb-2 text-white">No submissions yet</h3>
+            <h3 className="text-xl font-semibold mb-2 text-foreground">No submissions yet</h3>
             <p className="text-muted-foreground">
               No students have submitted this assessment yet.
             </p>
@@ -216,18 +216,18 @@ export default function AssessmentSubmissions() {
         ) : (
           <div className="space-y-6">
             {assessment.submissions.map((submission, index) => (
-              <Card key={submission._id || index} className="bg-white/5 border-white/10">
+              <Card key={submission._id || index} className="bg-card/50 border-border">
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
                         <User className="h-5 w-5 text-primary" />
-                        <CardTitle className="text-white">
+                        <CardTitle className="text-foreground">
                           {submission.studentId?.name || submission.studentId?.username || "Unknown Student"}
                         </CardTitle>
                         {getStatusBadge(submission.status)}
                       </div>
-                      <CardDescription className="text-white/70">
+                      <CardDescription className="text-foreground/70">
                         {submission.studentId?.email}
                       </CardDescription>
                     </div>
@@ -238,16 +238,16 @@ export default function AssessmentSubmissions() {
                     {/* Submission Info */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
                       <div>
-                        <Label className="text-white/60">Started At</Label>
-                        <p className="text-white font-medium flex items-center gap-2 mt-1">
+                        <Label className="text-foreground/60">Started At</Label>
+                        <p className="text-foregroundfont-medium flex items-center gap-2 mt-1">
                           <Calendar className="h-4 w-4" />
                           {formatDate(submission.startedAt)}
                         </p>
                       </div>
                       {submission.submittedAt && (
                         <div>
-                          <Label className="text-white/60">Submitted At</Label>
-                          <p className="text-white font-medium flex items-center gap-2 mt-1">
+                          <Label className="text-foreground/60">Submitted At</Label>
+                          <p className="text-foregroundfont-medium flex items-center gap-2 mt-1">
                             <CheckCircle2 className="h-4 w-4 text-green-400" />
                             {formatDate(submission.submittedAt)}
                           </p>
@@ -255,8 +255,8 @@ export default function AssessmentSubmissions() {
                       )}
                       {submission.submittedAt && (
                         <div>
-                          <Label className="text-white/60">Duration</Label>
-                          <p className="text-white font-medium flex items-center gap-2 mt-1">
+                          <Label className="text-foreground/60">Duration</Label>
+                          <p className="text-foregroundfont-medium flex items-center gap-2 mt-1">
                             <Clock className="h-4 w-4" />
                             {formatDuration(submission.startedAt, submission.submittedAt)}
                           </p>
@@ -266,18 +266,18 @@ export default function AssessmentSubmissions() {
 
                     {/* Project Details */}
                     {(submission.projectTitle || submission.projectDescription) && (
-                      <div className="border-t border-white/10 pt-4">
-                        <h3 className="font-semibold text-white mb-3">Project Details</h3>
+                      <div className="border-t border-border pt-4">
+                        <h3 className="font-semibold text-foregroundmb-3">Project Details</h3>
                         {submission.projectTitle && (
                           <div className="mb-3">
-                            <Label className="text-white/60">Project Title</Label>
-                            <p className="text-white font-medium mt-1">{submission.projectTitle}</p>
+                            <Label className="text-foreground/60">Project Title</Label>
+                            <p className="text-foregroundfont-medium mt-1">{submission.projectTitle}</p>
                           </div>
                         )}
                         {submission.projectDescription && (
                           <div>
-                            <Label className="text-white/60">Description / Design</Label>
-                            <p className="text-white/80 mt-1 whitespace-pre-wrap bg-white/5 p-4 rounded-lg border border-white/10">
+                            <Label className="text-foreground/60">Description / Design</Label>
+                            <p className="text-foreground/80 mt-1 whitespace-pre-wrap bg-card/50 p-4 rounded-lg border border-border">
                               {submission.projectDescription}
                             </p>
                           </div>
@@ -287,8 +287,8 @@ export default function AssessmentSubmissions() {
 
                     {/* Links */}
                     {(submission.deployedLink || submission.githubLink) && (
-                      <div className="border-t border-white/10 pt-4">
-                        <h3 className="font-semibold text-white mb-3">Links</h3>
+                      <div className="border-t border-border pt-4">
+                        <h3 className="font-semibold text-foregroundmb-3">Links</h3>
                         <div className="flex flex-wrap gap-4">
                           {submission.deployedLink && (
                             <a
@@ -318,13 +318,13 @@ export default function AssessmentSubmissions() {
 
                     {/* Custom Fields */}
                     {submission.customFields && Object.keys(submission.customFields).length > 0 && (
-                      <div className="border-t border-white/10 pt-4">
-                        <h3 className="font-semibold text-white mb-3">Additional Information</h3>
+                      <div className="border-t border-border pt-4">
+                        <h3 className="font-semibold text-foregroundmb-3">Additional Information</h3>
                         <div className="space-y-3">
                           {Object.entries(submission.customFields).map(([key, value]) => (
                             <div key={key}>
-                              <Label className="text-white/60">{key}</Label>
-                              <p className="text-white font-medium mt-1">
+                              <Label className="text-foreground/60">{key}</Label>
+                              <p className="text-foregroundfont-medium mt-1">
                                 {typeof value === "string" ? value : JSON.stringify(value)}
                               </p>
                             </div>

@@ -81,7 +81,7 @@ export function CourseCompletionCelebration({
           transition={{ type: "spring", duration: 0.5 }}
           className="relative z-10"
         >
-          <Card className="bg-black/95 backdrop-blur-xl border-2 border-white/20 shadow-2xl p-8 max-w-2xl w-full mx-4">
+          <Card className="bg-black/95 backdrop-blur-xl border-2 border-border shadow-2xl p-8 max-w-2xl w-full mx-4">
             {/* Sparkle Icons */}
             <div className="absolute top-4 right-4">
               <motion.div
@@ -132,14 +132,14 @@ export function CourseCompletionCelebration({
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.4 }}
               >
-                <h1 className="text-4xl md:text-5xl font-bold text-white mb-2">
+                <h1 className="text-4xl md:text-5xl font-bold text-foregroundmb-2">
                   🎉 Congratulations! 🎉
                 </h1>
-                <p className="text-xl md:text-2xl text-white/90 font-semibold">
+                <p className="text-xl md:text-2xl text-foreground/90 font-semibold">
                   You've Completed the Course!
                 </p>
                 {courseTitle && (
-                  <p className="text-lg text-white/70 mt-2">{courseTitle}</p>
+                  <p className="text-lg text-foreground/70 mt-2">{courseTitle}</p>
                 )}
               </motion.div>
 
@@ -172,7 +172,7 @@ export function CourseCompletionCelebration({
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.8 }}
-                className="text-white/80 text-lg leading-relaxed"
+                className="text-foreground/80 text-lg leading-relaxed"
               >
                 You've successfully completed all the lessons! Your dedication and
                 hard work have paid off. Now it's time to test your knowledge.
@@ -197,7 +197,7 @@ export function CourseCompletionCelebration({
                   onClick={handleGoToDashboard}
                   size="lg"
                   variant="outline"
-                  className="border-2 border-white/30 text-white hover:bg-white/10 font-semibold text-lg px-8 py-6 backdrop-blur-sm"
+                  className="border-2 border-foreground/30 text-foregroundhover:bg-foreground/10 font-semibold text-lg px-8 py-6 backdrop-blur-sm"
                 >
                   Go to Dashboard
                 </Button>
@@ -208,7 +208,7 @@ export function CourseCompletionCelebration({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: 1.2 }}
-                className="text-white/60 text-sm pt-4"
+                className="text-foreground/60 text-sm pt-4"
               >
                 ⏰ You have 24 hours to take the assessment after course completion
               </motion.p>
