@@ -357,6 +357,20 @@ router.post('/follow/:studentId', authenticate, async (req: Request, res: Respon
       targetResponse.socialLinks = Object.fromEntries(updatedTarget.socialLinks);
     }
 
+    // Emit Socket.io events for real-time updates
+    const { emitToUser, emitToAll } = await import('../utils/socket.js');
+    emitToUser(user._id.toString(), 'follow:updated', {
+      targetUserId: studentId,
+      following: !isFollowing,
+      followerCount: updatedTarget.followers?.length || 0,
+      user: targetResponse,
+    });
+    emitToUser(studentId, 'follower:updated', {
+      followerId: user._id.toString(),
+      followerCount: updatedTarget.followers?.length || 0,
+      isFollowing: !isFollowing,
+    });
+
     res.json({
       following: !isFollowing,
       followerCount: updatedTarget.followers?.length || 0,

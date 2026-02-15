@@ -10,6 +10,7 @@ import { parseYouTubeUrl, getYouTubeThumbnailUrl } from '../utils/youtubeParser.
 import { fetchYouTubePlaylistVideos, fetchYouTubeVideoDetails } from '../utils/youtubeFetcher.js';
 import { createRazorpayOrder, verifyRazorpaySignature } from '../utils/razorpay.js';
 import { CourseLevel, YouTubeType, SubscriptionPlan } from '../types/index.js';
+import { sendEnrollmentEmail, sendCourseCompletionEmail, sendMentorCompletionNotification } from '../utils/email.js';
 
 const router = express.Router();
 
@@ -1468,6 +1469,25 @@ router.post('/:id/verify-payment', authenticate, async (
       // Increment course enrollment count
       course.enrollmentsCount += 1;
       await course.save();
+
+      // Send enrollment email to student (non-blocking)
+      sendEnrollmentEmail(
+        student.email,
+        student.name || student.username,
+        course.title,
+        course._id.toString()
+      ).catch((error) => {
+        console.error('[Course Routes] Failed to send enrollment email:', error);
+      });
+
+      // Emit Socket.io event for enrollment
+      const { emitToUser, emitToAll } = await import('../utils/socket.js');
+      emitToUser(student._id.toString(), 'course:enrolled', {
+        courseId: course._id.toString(),
+        courseTitle: course.title,
+        plan,
+        enrolledAt: new Date(),
+      });
     }
 
     res.json({
@@ -1522,6 +1542,24 @@ router.post('/:id/enroll', authenticate, async (req: Request, res: Response): Pr
     course.enrollmentsCount += 1;
     await course.save();
 
+    // Send enrollment email to student (non-blocking)
+    sendEnrollmentEmail(
+      student.email,
+      student.name || student.username,
+      course.title,
+      course._id.toString()
+    ).catch((error) => {
+      console.error('[Course Routes] Failed to send enrollment email:', error);
+    });
+
+    // Emit Socket.io event for enrollment
+    const { emitToUser } = await import('../utils/socket.js');
+    emitToUser(student._id.toString(), 'course:enrolled', {
+      courseId: course._id.toString(),
+      courseTitle: course.title,
+      enrolledAt: new Date(),
+    });
+
     res.json({ message: 'Successfully enrolled in course', course });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
@@ -1551,16 +1589,64 @@ router.patch(
 
       // Update progress
       await student.updateCourseProgress(new mongoose.Types.ObjectId(courseId), progress);
+      
+      // Reload student to get updated enrollment status
+      await student.populate('coursesEnrolledIn.courseId');
+      const enrollment = student.coursesEnrolledIn.find(
+        (e) => e.courseId.toString() === courseId
+      );
+      
+      // If progress is 100 and course is completed, send emails
+      if (progress >= 100 && enrollment && enrollment.status === 'completed') {
+        const course = await Course.findById(courseId);
+        if (course) {
+          // Send completion emails (non-blocking)
+          Promise.all([
+            // Send email to student
+            sendCourseCompletionEmail(
+              student.email,
+              student.name || student.username,
+              course.title,
+              course._id.toString()
+            ),
+            // Send email to mentor/instructor
+            (async () => {
+              try {
+                const mentor = await Student.findById(course.createdBy).select('email name username');
+                if (mentor && mentor.email) {
+                  await sendMentorCompletionNotification(
+                    mentor.email,
+                    mentor.name || mentor.username || course.instructor,
+                    student.name || student.username,
+                    course.title,
+                    course._id.toString()
+                  );
+                }
+              } catch (error) {
+                console.error('[Course Routes] Failed to send mentor notification:', error);
+              }
+            })(),
+          ]).catch((error) => {
+            console.error('[Course Routes] Failed to send completion emails:', error);
+          });
 
-      // If progress is 100, mark as completed
-      if (progress >= 100) {
-        const enrollment = student.coursesEnrolledIn.find(
-          (e) => e.courseId.toString() === courseId
-        );
-        if (enrollment && enrollment.status === 'inprogress') {
-          enrollment.status = 'completed';
-          enrollment.completedAt = new Date();
-          await student.save();
+          // Emit Socket.io events for completion
+          const { emitToUser } = await import('../utils/socket.js');
+          emitToUser(student._id.toString(), 'course:completed', {
+            courseId: course._id.toString(),
+            courseTitle: course.title,
+            completedAt: new Date(),
+            readyForAssessment: true,
+          });
+          // Emit to mentor/instructor
+          const mentorId = course.createdBy.toString();
+          emitToUser(mentorId, 'student:completed-course', {
+            studentId: student._id.toString(),
+            studentName: student.name || student.username,
+            courseId: course._id.toString(),
+            courseTitle: course.title,
+            completedAt: new Date(),
+          });
         }
       }
 
@@ -1937,6 +2023,54 @@ router.post(
         enrollment.completedAt = new Date();
         courseCompleted = true;
         console.log(`[Course Routes] Course marked as completed`);
+
+        // Send completion emails (non-blocking)
+        Promise.all([
+          // Send email to student
+          sendCourseCompletionEmail(
+            student.email,
+            student.name || student.username,
+            course.title,
+            course._id.toString()
+          ),
+          // Send email to mentor/instructor
+          (async () => {
+            try {
+              const mentor = await Student.findById(course.createdBy).select('email name username');
+              if (mentor && mentor.email) {
+                await sendMentorCompletionNotification(
+                  mentor.email,
+                  mentor.name || mentor.username || course.instructor,
+                  student.name || student.username,
+                  course.title,
+                  course._id.toString()
+                );
+              }
+            } catch (error) {
+              console.error('[Course Routes] Failed to send mentor notification:', error);
+            }
+          })(),
+        ]).catch((error) => {
+          console.error('[Course Routes] Failed to send completion emails:', error);
+        });
+
+        // Emit Socket.io events for completion
+        const { emitToUser } = await import('../utils/socket.js');
+        emitToUser(student._id.toString(), 'course:completed', {
+          courseId: course._id.toString(),
+          courseTitle: course.title,
+          completedAt: new Date(),
+          readyForAssessment: true,
+        });
+        // Emit to mentor/instructor
+        const mentorId = course.createdBy.toString();
+        emitToUser(mentorId, 'student:completed-course', {
+          studentId: student._id.toString(),
+          studentName: student.name || student.username,
+          courseId: course._id.toString(),
+          courseTitle: course.title,
+          completedAt: new Date(),
+        });
       }
 
       await student.save();

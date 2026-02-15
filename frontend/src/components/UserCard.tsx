@@ -1,10 +1,11 @@
 import { Link } from "react-router-dom";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { apiClient } from "@/lib/api/client";
 import { useAuthStore } from "@/lib/stores/authStore";
 import { toast } from "sonner";
+import { getSocket } from "@/lib/utils/socket";
 
 interface User {
   _id?: string;
@@ -38,6 +39,36 @@ export function UserCard({
   const isOwnProfile = currentUser?.username === user.username;
 
   const userId = user._id || user.id;
+
+  // Listen for Socket.io follow updates
+  useEffect(() => {
+    if (!userId || !currentUser || isOwnProfile) return;
+
+    const socket = getSocket();
+    if (!socket || !socket.connected) return;
+
+    const handleFollowUpdate = (data: { targetUserId: string; following: boolean }) => {
+      const userIdStr = userId?.toString();
+      const targetUserIdStr = data.targetUserId?.toString();
+      if (userIdStr && targetUserIdStr && targetUserIdStr === userIdStr) {
+        setIsFollowing(data.following);
+        if (onFollowChange) {
+          onFollowChange();
+        }
+      }
+    };
+
+    socket.on("follow:updated", handleFollowUpdate);
+
+    return () => {
+      socket.off("follow:updated", handleFollowUpdate);
+    };
+  }, [userId, currentUser, isOwnProfile, onFollowChange]);
+
+  // Update state when initialIsFollowing prop changes
+  useEffect(() => {
+    setIsFollowing(initialIsFollowing);
+  }, [initialIsFollowing]);
 
   const handleFollow = async (e: React.MouseEvent) => {
     e.preventDefault();

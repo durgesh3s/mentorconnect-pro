@@ -48,8 +48,10 @@ if (envPath) {
 }
 
 import express, { Request, Response, NextFunction } from 'express';
+import { createServer } from 'http';
 import cors from 'cors';
 import { connectDB } from './config/database.js';
+import { initializeSocket } from './utils/socket.js';
 
 // Import routes
 import authRoutes from './routes/auth.js';
@@ -109,7 +111,15 @@ const PORT = process.env.PORT || 3000;
 const startServer = async (): Promise<void> => {
   try {
     await connectDB();
-    app.listen(PORT, () => {
+    
+    // Create HTTP server
+    const httpServer = createServer(app);
+    
+    // Initialize Socket.io
+    initializeSocket(httpServer);
+    console.log('✅ Socket.io initialized');
+    
+    httpServer.listen(PORT, () => {
       console.log(`Server running on port ${PORT}`);
       console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
     });

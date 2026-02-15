@@ -135,7 +135,11 @@ export default function FollowingList() {
           <>
             <div className="space-y-4 mb-6">
               {following.map((user) => (
-                <UserCard key={user._id || user.id} user={user} />
+                <UserCard 
+                  key={user._id || user.id} 
+                  user={user}
+                  isFollowing={isOwnProfile}
+                />
               ))}
             </div>
 

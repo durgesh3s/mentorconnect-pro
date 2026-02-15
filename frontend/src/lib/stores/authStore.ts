@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import { disconnectSocket } from "@/lib/utils/socket";
 
 interface User {
   id: string;
@@ -40,6 +41,7 @@ export const useAuthStore = create<AuthState>()(
       setPendingRole: (pendingRole) => set({ pendingRole }),
       logout: () => {
         localStorage.removeItem("auth_token");
+        disconnectSocket();
         set({ user: null, isAuthenticated: false, pendingRole: null });
       },
     }),

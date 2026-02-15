@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { useAuthStore } from "@/lib/stores/authStore";
 import { useProfileStore } from "@/lib/stores/profileStore";
 import { apiClient } from "@/lib/api/client";
+import { getSocket } from "@/lib/utils/socket";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -156,6 +157,52 @@ export default function ProfileView() {
 
     fetchProfile();
   }, [username, user, isOwnProfile, setCurrentProfile, setThreads]);
+
+  // Listen for Socket.io follow updates
+  useEffect(() => {
+    if (!profile || isOwnProfile || !user) return;
+
+    const profileId = profile._id?.toString() || profile.id?.toString();
+    if (!profileId) return;
+
+    const socket = getSocket();
+    if (!socket) return;
+
+    const handleFollowUpdate = (data: { targetUserId: string; following: boolean; followerCount: number }) => {
+      if (data.targetUserId === profileId) {
+        setIsFollowing(data.following);
+        setProfile((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            followers: data.followerCount,
+          };
+        });
+      }
+    };
+
+    const handleFollowerUpdate = (data: { followerId: string; followerCount: number }) => {
+      const currentUserId = user.id || user._id?.toString();
+      if (data.followerId === currentUserId && profileId === currentUserId) {
+        // Update follower count if viewing own profile
+        setProfile((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            followers: data.followerCount,
+          };
+        });
+      }
+    };
+
+    socket.on("follow:updated", handleFollowUpdate);
+    socket.on("follower:updated", handleFollowerUpdate);
+
+    return () => {
+      socket.off("follow:updated", handleFollowUpdate);
+      socket.off("follower:updated", handleFollowerUpdate);
+    };
+  }, [profile, user, isOwnProfile]);
 
   const handleFollowToggle = async () => {
     if (!profile || isOwnProfile || isFollowingLoading) return;

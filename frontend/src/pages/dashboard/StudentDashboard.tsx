@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useAuthStore } from "@/lib/stores/authStore";
 import { useCourseStore } from "@/lib/stores/courseStore";
 import { apiClient } from "@/lib/api/client";
+import { getSocket } from "@/lib/utils/socket";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -101,6 +102,41 @@ export default function StudentDashboard() {
     if (!user) return;
     fetchCourses(activeTab);
   }, [user, activeTab]);
+
+  // Listen for Socket.io follower/following updates
+  useEffect(() => {
+    if (!user) return;
+
+    const socket = getSocket();
+    if (!socket) return;
+
+    const fetchProfile = async () => {
+      try {
+        const profileData = await apiClient.get<UserProfile>(`/students/${user.username}`);
+        setProfile(profileData);
+      } catch (error) {
+        console.error("Failed to refresh profile", error);
+      }
+    };
+
+    const handleFollowerUpdate = () => {
+      // Refresh profile when someone follows/unfollows you
+      fetchProfile();
+    };
+
+    const handleFollowUpdate = () => {
+      // Refresh profile when you follow/unfollow someone
+      fetchProfile();
+    };
+
+    socket.on("follower:updated", handleFollowerUpdate);
+    socket.on("follow:updated", handleFollowUpdate);
+
+    return () => {
+      socket.off("follower:updated", handleFollowerUpdate);
+      socket.off("follow:updated", handleFollowUpdate);
+    };
+  }, [user]);
 
   if (!user) {
     return null;

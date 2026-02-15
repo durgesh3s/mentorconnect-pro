@@ -36,6 +36,7 @@ import AssessmentSubmissions from "./pages/admin/AssessmentSubmissions";
 import SearchUsers from "./pages/users/SearchUsers";
 import FollowersList from "./pages/users/FollowersList";
 import FollowingList from "./pages/users/FollowingList";
+import { SocketProvider } from "./components/SocketProvider";
 
 const queryClient = new QueryClient();
 
@@ -45,7 +46,8 @@ const App = () => (
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <BrowserRouter>
+        <SocketProvider>
+          <BrowserRouter>
           <Routes>
             <Route path="/" element={<Index />} />
             
@@ -105,6 +107,7 @@ const App = () => (
             <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
+        </SocketProvider>
       </TooltipProvider>
     </ThemeProvider>
   </QueryClientProvider>
