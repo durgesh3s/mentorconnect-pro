@@ -14,7 +14,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { GraduationCap, Users, Loader2, CheckCircle2, X } from "lucide-react";
 import { toast } from "sonner";
 
-const profileSchema = z.object({
+const  profileSchema = z.object({
   username: z.string().min(3).max(30).regex(/^[a-zA-Z0-9_]+$/),
   name: z.string().min(2).max(100),
   bio: z.string().max(500).optional(),

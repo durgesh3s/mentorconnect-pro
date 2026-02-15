@@ -8,7 +8,7 @@ export default function SelectRole() {
   const [selectedRole, setSelectedRole] = useState<"student" | "mentor" | null>(null);
   const navigate = useNavigate();
 
-  const handleContinue = () => {
+  const  handleContinue = () => {
     if (selectedRole) {
       localStorage.setItem("pendingRole", selectedRole);
       // In production, this would redirect to OAuth

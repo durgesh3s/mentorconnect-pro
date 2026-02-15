@@ -80,4 +80,6 @@ const App = () => (
   </QueryClientProvider>
 );
 
+//this is for git tutorial
+
 export default App;
